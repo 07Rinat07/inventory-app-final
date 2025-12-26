@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.php text
+*.twig text
+*.md text

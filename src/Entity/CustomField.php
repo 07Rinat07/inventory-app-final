@@ -4,11 +4,20 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Domain\CustomField\CustomFieldType;
 use App\Repository\CustomFieldRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CustomFieldRepository::class)]
-#[ORM\Table(name: 'custom_fields')]
+#[ORM\Table(
+    name: 'custom_fields',
+    uniqueConstraints: [
+        new ORM\UniqueConstraint(
+            name: 'uniq_inventory_position',
+            columns: ['inventory_id', 'position']
+        )
+    ]
+)]
 class CustomField
 {
     #[ORM\Id]
@@ -23,6 +32,27 @@ class CustomField
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Inventory $inventory;
 
+    /**
+     * Тип пользовательского поля.
+     * Храним string в БД, используем enum в домене.
+     */
+    #[ORM\Column(type: 'string', length: 20)]
+    private string $type;
+
+    /**
+     * Позиция поля внутри inventory (для drag & drop reorder).
+     */
+    #[ORM\Column(type: 'integer')]
+    private int $position;
+
+    /**
+     * Обязательное ли поле.
+     */
+    #[ORM\Column(type: 'boolean')]
+    private bool $isRequired = false;
+
+    // ---------------- getters / setters ----------------
+
     public function getId(): ?int
     {
         return $this->id;
@@ -36,6 +66,39 @@ class CustomField
     public function setInventory(Inventory $inventory): self
     {
         $this->inventory = $inventory;
+        return $this;
+    }
+
+    public function getType(): CustomFieldType
+    {
+        return CustomFieldType::from($this->type);
+    }
+
+    public function setType(CustomFieldType $type): self
+    {
+        $this->type = $type->value;
+        return $this;
+    }
+
+    public function getPosition(): int
+    {
+        return $this->position;
+    }
+
+    public function setPosition(int $position): self
+    {
+        $this->position = $position;
+        return $this;
+    }
+
+    public function isRequired(): bool
+    {
+        return $this->isRequired;
+    }
+
+    public function setIsRequired(bool $required): self
+    {
+        $this->isRequired = $required;
         return $this;
     }
 }

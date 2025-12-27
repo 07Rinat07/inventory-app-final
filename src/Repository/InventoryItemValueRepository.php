@@ -17,48 +17,31 @@ final class InventoryItemValueRepository extends ServiceEntityRepository
         parent::__construct($registry, InventoryItemValue::class);
     }
 
+    public function setValue(
+        InventoryItem $item,
+        CustomField $field,
+        ?string $rawValue
+    ): void {
+        $value = $this->findOneBy([
+            'item' => $item,
+            'field' => $field,
+        ]);
+
+        if (!$value) {
+            $value = new InventoryItemValue();
+            $value->setItem($item);
+            $value->setField($field);
+            $this->_em->persist($value);
+        }
+
+        $value->setValue($rawValue);
+    }
+
     /**
      * @return InventoryItemValue[]
      */
     public function findByItem(InventoryItem $item): array
     {
-        return $this->createQueryBuilder('v')
-            ->andWhere('v.inventoryItem = :item')
-            ->setParameter('item', $item)
-            ->getQuery()
-            ->getResult();
-    }
-
-    public function findOneByItemAndField(
-        InventoryItem $item,
-        CustomField $field
-    ): ?InventoryItemValue {
-        return $this->findOneBy([
-            'inventoryItem' => $item,
-            'customField' => $field,
-        ]);
-    }
-
-    /**
-     * Удобный метод для записи значения
-     */
-    public function setValue(
-        InventoryItem $item,
-        CustomField $field,
-        ?string $value
-    ): InventoryItemValue {
-        $entity = $this->findOneByItemAndField($item, $field);
-
-        if (!$entity) {
-            $entity = new InventoryItemValue();
-            $entity
-                ->setInventoryItem($item)
-                ->setCustomField($field);
-            $this->_em->persist($entity);
-        }
-
-        $entity->setValue($value);
-
-        return $entity;
+        return $this->findBy(['item' => $item]);
     }
 }

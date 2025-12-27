@@ -1,7 +1,8 @@
 <?php
+
 declare(strict_types=1);
 
-namespace App\Controller\Inventory;
+namespace App\Controller;
 
 use App\Entity\Inventory;
 use App\Entity\InventoryItem;
@@ -25,10 +26,8 @@ final class InventoryItemController extends AbstractController
         InventoryItemValueRepository $valueRepository,
         EntityManagerInterface $em,
     ): Response {
-        // security
         $this->denyAccessUnlessGranted('INVENTORY_EDIT', $inventory);
 
-        // load custom fields
         $fields = $fieldRepository->findByInventoryOrdered($inventory);
 
         if ($request->isMethod('GET')) {
@@ -44,21 +43,19 @@ final class InventoryItemController extends AbstractController
         try {
             $item = new InventoryItem();
             $item->setInventory($inventory);
-            $item->setCustomId(
-                $idGenerator->generate($inventory)
-            );
+
+            $customId = $idGenerator->generate($inventory);
+            $item->setCustomId($customId);
 
             $em->persist($item);
 
             foreach ($fields as $field) {
-                $rawValue = $request->request->get(
-                    'field_' . $field->getId()
-                );
+                $rawValue = $request->request->get('field_' . $field->getId());
 
                 $valueRepository->setValue(
-                    $item,
-                    $field,
-                    $rawValue
+                    item: $item,
+                    field: $field,
+                    rawValue: $rawValue
                 );
             }
 
@@ -75,4 +72,3 @@ final class InventoryItemController extends AbstractController
         }
     }
 }
-

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Domain\Enum\CustomFieldType;
 use App\Entity\CustomField;
 use App\Entity\Inventory;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -30,14 +31,16 @@ final class CustomFieldRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    public function countByInventoryAndType(Inventory $inventory, string $type): int
-    {
+    public function countByInventoryAndType(
+        Inventory $inventory,
+        CustomFieldType $type
+    ): int {
         return (int) $this->createQueryBuilder('f')
             ->select('COUNT(f.id)')
             ->andWhere('f.inventory = :inv')
             ->andWhere('f.type = :type')
             ->setParameter('inv', $inventory)
-            ->setParameter('type', $type)
+            ->setParameter('type', $type->value)
             ->getQuery()
             ->getSingleScalarResult();
     }

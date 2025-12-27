@@ -1,0 +1,34 @@
+{% set name = 'field_' ~ field.id %}
+
+{% if field.type.value == 'text' %}
+  <input type="text"
+         name="{{ name }}"
+         class="form-control"
+         {% if field.isRequired %}required{% endif %}>
+
+{% elseif field.type.value == 'textarea' %}
+  <textarea name="{{ name }}"
+            class="form-control"
+            rows="3"
+            {% if field.isRequired %}required{% endif %}></textarea>
+
+{% elseif field.type.value == 'number' %}
+  <input type="number"
+         name="{{ name }}"
+         class="form-control"
+         {% if field.isRequired %}required{% endif %}>
+
+{% elseif field.type.value == 'boolean' %}
+  <div class="form-check">
+    <input type="checkbox"
+           name="{{ name }}"
+           value="1"
+           class="form-check-input">
+  </div>
+
+{% elseif field.type.value == 'link' %}
+  <input type="url"
+         name="{{ name }}"
+         class="form-control"
+         {% if field.isRequired %}required{% endif %}>
+{% endif %}

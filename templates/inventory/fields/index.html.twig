@@ -1,0 +1,110 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Custom fields{% endblock %}
+
+{% block body %}
+  <div class="container mt-4">
+
+    <h3>
+      Custom fields —
+      <span class="text-muted">{{ inventory.name }}</span>
+    </h3>
+
+    <table class="table table-hover mt-3">
+      <thead>
+      <tr>
+        <th style="width: 40px"></th>
+        <th>Type</th>
+        <th>Required</th>
+        <th style="width: 120px"></th>
+      </tr>
+      </thead>
+
+      {# sortable container #}
+      <tbody id="fields-sortable">
+      {% for field in fields %}
+        <tr
+          data-id="{{ field.id }}"
+          draggable="true"
+          class="align-middle"
+        >
+          <td class="text-muted cursor-move">☰</td>
+
+          <td>{{ field.type.value }}</td>
+
+          <td>
+            {% if field.isRequired %}
+              <span class="badge bg-success">Yes</span>
+            {% else %}
+              <span class="badge bg-secondary">No</span>
+            {% endif %}
+          </td>
+
+          <td class="text-end">
+            <a href="#" class="btn btn-sm btn-outline-secondary">
+              Edit
+            </a>
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="4" class="text-center text-muted">
+            No custom fields
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    {# Кнопка сохранения появится на следующем шаге #}
+    <div class="mt-3">
+      <button class="btn btn-primary" disabled>
+        Save order
+      </button>
+    </div>
+
+  </div>
+{% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+
+  <script>
+    const tbody = document.getElementById('fields-sortable');
+
+    let draggedRow = null;
+
+    tbody.addEventListener('dragstart', event => {
+      draggedRow = event.target.closest('tr');
+      if (!draggedRow) return;
+
+      draggedRow.classList.add('table-active');
+      event.dataTransfer.effectAllowed = 'move';
+    });
+
+    tbody.addEventListener('dragend', () => {
+      if (draggedRow) {
+        draggedRow.classList.remove('table-active');
+        draggedRow = null;
+      }
+    });
+
+    tbody.addEventListener('dragover', event => {
+      event.preventDefault();
+
+      const targetRow = event.target.closest('tr');
+      if (!targetRow || targetRow === draggedRow) {
+        return;
+      }
+
+      const rect = targetRow.getBoundingClientRect();
+      const shouldInsertAfter =
+        (event.clientY - rect.top) / rect.height > 0.5;
+
+      tbody.insertBefore(
+        draggedRow,
+        shouldInsertAfter ? targetRow.nextSibling : targetRow
+      );
+    });
+  </script>
+{% endblock %}

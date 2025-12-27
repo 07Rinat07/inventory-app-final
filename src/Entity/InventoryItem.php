@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\InventoryItemRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use DateTimeImmutable;
 
 #[ORM\Entity(repositoryClass: InventoryItemRepository::class)]
 #[ORM\Table(name: 'inventory_items')]
-#[ORM\UniqueConstraint(name: 'uniq_inventory_custom_id', columns: ['inventory_id', 'custom_id'])]
+#[ORM\UniqueConstraint(
+    name: 'uniq_inventory_custom_id',
+    columns: ['inventory_id', 'custom_id']
+)]
 class InventoryItem
 {
     #[ORM\Id]
@@ -24,9 +29,17 @@ class InventoryItem
     #[ORM\Column(name: 'custom_id', length: 255, nullable: false)]
     private string $customId;
 
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private DateTimeImmutable $createdAt;
+
     #[ORM\Version]
     #[ORM\Column(type: 'integer', nullable: false)]
     private int $version = 1;
+
+    public function __construct()
+    {
+        $this->createdAt = new DateTimeImmutable();
+    }
 
     // -------- getters / setters --------
 
@@ -55,6 +68,11 @@ class InventoryItem
     {
         $this->customId = $customId;
         return $this;
+    }
+
+    public function getCreatedAt(): DateTimeImmutable
+    {
+        return $this->createdAt;
     }
 
     public function getVersion(): int

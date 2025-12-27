@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\InventoryRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: InventoryRepository::class)]
@@ -27,21 +29,38 @@ class Inventory
     /**
      * Название инвентаря
      */
-    #[ORM\Column(length: 255, nullable: false)]
+    #[ORM\Column(length: 255)]
     private string $name;
 
     /**
      * Публичный ли инвентарь
      */
-    #[ORM\Column(name: 'is_public', type: 'boolean', nullable: false)]
+    #[ORM\Column(name: 'is_public', type: 'boolean')]
     private bool $isPublic = false;
 
     /**
      * Optimistic locking
      */
     #[ORM\Version]
-    #[ORM\Column(type: 'integer', nullable: false)]
+    #[ORM\Column(type: 'integer')]
     private int $version = 1;
+
+    /**
+     * Формат кастомного ID (упорядоченные части)
+     */
+    #[ORM\OneToMany(
+        mappedBy: 'inventory',
+        targetEntity: InventoryIdFormatPart::class,
+        cascade: ['persist', 'remove'],
+        orphanRemoval: true
+    )]
+    #[ORM\OrderBy(['position' => 'ASC'])]
+    private Collection $idFormatParts;
+
+    public function __construct()
+    {
+        $this->idFormatParts = new ArrayCollection();
+    }
 
     // ---------------- getters / setters ----------------
 
@@ -86,5 +105,13 @@ class Inventory
     public function getVersion(): int
     {
         return $this->version;
+    }
+
+    /**
+     * @return Collection<int, InventoryIdFormatPart>
+     */
+    public function getIdFormatParts(): Collection
+    {
+        return $this->idFormatParts;
     }
 }

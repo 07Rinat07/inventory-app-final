@@ -1,43 +1,48 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repository;
 
+use App\Entity\Inventory;
 use App\Entity\InventorySequence;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @extends ServiceEntityRepository<InventorySequence>
- */
-class InventorySequenceRepository extends ServiceEntityRepository
+final class InventorySequenceRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, InventorySequence::class);
     }
 
-    //    /**
-    //     * @return InventorySequence[] Returns an array of InventorySequence objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('i')
-    //            ->andWhere('i.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('i.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    /**
+     * Возвращает sequence для inventory с блокировкой строки (SELECT FOR UPDATE).
+     *
+     * ВАЖНО:
+     * - метод ДОЛЖЕН вызываться ТОЛЬКО внутри транзакции
+     * - используется для генерации кастомных ID
+     */
+    public function findOneByInventoryForUpdate(
+        Inventory $inventory
+    ): ?InventorySequence {
+        $conn = $this->getEntityManager()->getConnection();
 
-    //    public function findOneBySomeField($value): ?InventorySequence
-    //    {
-    //        return $this->createQueryBuilder('i')
-    //            ->andWhere('i.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+        $sql = <<<SQL
+SELECT id
+FROM inventory_sequence
+WHERE inventory_id = :inventoryId
+FOR UPDATE
+SQL;
+
+        $id = $conn->fetchOne($sql, [
+            'inventoryId' => $inventory->getId(),
+        ]);
+
+        if ($id === false) {
+            return null;
+        }
+
+        return $this->find((int) $id);
+    }
 }

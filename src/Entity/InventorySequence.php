@@ -9,7 +9,10 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: InventorySequenceRepository::class)]
 #[ORM\Table(name: 'inventory_sequence')]
-#[ORM\UniqueConstraint(name: 'uniq_inventory_sequence', columns: ['inventory_id'])]
+#[ORM\UniqueConstraint(
+    name: 'uniq_inventory_sequence_inventory',
+    columns: ['inventory_id']
+)]
 class InventorySequence
 {
     #[ORM\Id]
@@ -17,12 +20,17 @@ class InventorySequence
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\OneToOne(targetEntity: Inventory::class)]
+    #[ORM\OneToOne]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Inventory $inventory;
 
-    #[ORM\Column(nullable: false)]
+    #[ORM\Column(name: 'next_value')]
     private int $nextValue = 1;
+
+    public function __construct(Inventory $inventory)
+    {
+        $this->inventory = $inventory;
+    }
 
     public function getId(): ?int
     {
@@ -34,23 +42,18 @@ class InventorySequence
         return $this->inventory;
     }
 
-    public function setInventory(Inventory $inventory): self
-    {
-        $this->inventory = $inventory;
-        return $this;
-    }
-
     /**
-     * Returns current value and increments the sequence.
-     * IMPORTANT: Must be used inside a DB transaction with row-level lock.
+     * Возвращает следующий номер и увеличивает счётчик.
+     *
+     * ВАЖНО:
+     * - вызывать ТОЛЬКО внутри транзакции
+     * - безопасно при SELECT FOR UPDATE
      */
     public function next(): int
     {
-        return $this->nextValue++;
-    }
+        $current = $this->nextValue;
+        $this->nextValue++;
 
-    public function getNextValue(): int
-    {
-        return $this->nextValue;
+        return $current;
     }
 }

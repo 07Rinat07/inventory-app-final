@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+  <div class="container mt-4">
+
+    <div class="d-flex justify-content-between mb-3">
+      <h3>Inventories</h3>
+      <a href="{{ path('inventory_create') }}" class="btn btn-primary">Create</a>
+    </div>
+
+    <table class="table table-striped">
+      <tr>
+        <th>Name</th>
+        <th>Owner</th>
+        <th>Public</th>
+        <th></th>
+      </tr>
+
+      {% for inventory in inventories %}
+        <tr>
+          <td>{{ inventory.name }}</td>
+          <td>{{ inventory.owner.email }}</td>
+          <td>{{ inventory.isPublic ? 'Yes' : 'No' }}</td>
+          <td>
+            {% if is_granted('INVENTORY_VIEW', inventory) %}
+              <a href="#" class="btn btn-sm btn-outline-secondary">View</a>
+            {% endif %}
+            {% if is_granted('INVENTORY_EDIT', inventory) %}
+              <a href="#" class="btn btn-sm btn-outline-primary">Edit</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+
+  </div>
+{% endblock %}

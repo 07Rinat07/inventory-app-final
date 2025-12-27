@@ -1,0 +1,94 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+  <div class="container mt-4">
+
+    <h3>Custom fields — {{ inventory.name }}</h3>
+
+    {# Toolbar: Add #}
+    <form method="post" action="{{ path('custom_field_create', {id: inventory.id}) }}" class="row g-2 mb-3">
+      <div class="col-md-5">
+        <input class="form-control" name="label" placeholder="Label (e.g. Vendor, Serial, Link)" required maxlength="100">
+      </div>
+      <div class="col-md-3">
+        <select class="form-select" name="type" required>
+          <option value="TEXT">TEXT</option>
+          <option value="TEXTAREA">TEXTAREA</option>
+          <option value="NUMBER">NUMBER</option>
+          <option value="LINK">LINK</option>
+          <option value="BOOL">BOOL</option>
+        </select>
+      </div>
+      <div class="col-md-4 d-flex gap-2">
+        <button class="btn btn-primary">Add</button>
+        <a class="btn btn-outline-secondary" href="{{ path('inventory_index') }}">Back</a>
+      </div>
+    </form>
+
+    {# Toolbar: Bulk actions (checkbox + actions) #}
+    <form method="post" action="{{ path('custom_field_bulk', {id: inventory.id}) }}">
+      <div class="d-flex gap-2 mb-2">
+        <button class="btn btn-outline-danger" name="action" value="delete">Delete selected</button>
+        <button class="btn btn-outline-secondary" name="action" value="hide">Hide selected</button>
+        <button class="btn btn-outline-secondary" name="action" value="show">Show selected</button>
+      </div>
+
+      <table class="table table-striped">
+        <thead>
+        <tr>
+          <th style="width: 40px;">
+            <input type="checkbox" id="check-all">
+          </th>
+          <th>Pos</th>
+          <th>Label</th>
+          <th>Type</th>
+          <th>Visible</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for f in fields %}
+          <tr>
+            <td>
+              <input type="checkbox" name="ids[]" value="{{ f.id }}" class="row-check">
+            </td>
+            <td>{{ f.position }}</td>
+            <td>{{ f.label }}</td>
+            <td>{{ f.type }}</td>
+            <td>{{ f.isVisible ? 'Yes' : 'No' }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </form>
+
+    {# Reorder через toolbar (один выбранный) #}
+    <form method="post" action="{{ path('custom_field_move', {id: inventory.id}) }}" class="d-flex gap-2">
+      <input type="hidden" name="field_id" id="move-field-id">
+      <button class="btn btn-outline-primary" name="direction" value="-1" type="submit">Move up</button>
+      <button class="btn btn-outline-primary" name="direction" value="1" type="submit">Move down</button>
+      <div class="text-muted align-self-center">
+        Select exactly one row to move.
+      </div>
+    </form>
+
+  </div>
+
+  <script>
+    const checkAll = document.getElementById('check-all');
+    const rowChecks = document.querySelectorAll('.row-check');
+    const moveFieldId = document.getElementById('move-field-id');
+
+    checkAll?.addEventListener('change', () => {
+      rowChecks.forEach(ch => ch.checked = checkAll.checked);
+      syncMoveSelected();
+    });
+
+    rowChecks.forEach(ch => ch.addEventListener('change', syncMoveSelected));
+
+    function syncMoveSelected() {
+      const selected = [...rowChecks].filter(x => x.checked).map(x => x.value);
+      // Move: только один выбранный
+      moveFieldId.value = selected.length === 1 ? selected[0] : '';
+    }
+  </script>
+{% endblock %}

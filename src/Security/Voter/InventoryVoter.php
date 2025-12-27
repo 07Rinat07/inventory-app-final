@@ -13,65 +13,61 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 final class InventoryVoter extends Voter
 {
-    public const VIEW            = 'INVENTORY_VIEW';
-    public const CREATE_ITEM     = 'INVENTORY_CREATE_ITEM';
-    public const EDIT_ITEM       = 'INVENTORY_EDIT_ITEM';
-    public const DELETE_ITEM     = 'INVENTORY_DELETE_ITEM';
-    public const MANAGE_ACCESS   = 'INVENTORY_MANAGE_ACCESS';
+    public const VIEW = 'INVENTORY_VIEW';
+    public const EDIT = 'INVENTORY_EDIT';
+    public const MANAGE_FIELDS = 'INVENTORY_MANAGE_FIELDS';
 
     public function __construct(
-        private InventoryAccessRepository $accessRepository
+        private InventoryAccessRepository $accessRepository,
     ) {}
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return $subject instanceof Inventory
-            && \in_array($attribute, [
+        return in_array($attribute, [
                 self::VIEW,
-                self::CREATE_ITEM,
-                self::EDIT_ITEM,
-                self::DELETE_ITEM,
-                self::MANAGE_ACCESS,
-            ], true);
+                self::EDIT,
+                self::MANAGE_FIELDS,
+            ], true)
+            && $subject instanceof Inventory;
     }
 
-    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
-    {
+    protected function voteOnAttribute(
+        string $attribute,
+        mixed $subject,
+        TokenInterface $token
+    ): bool {
+        $user = $token->getUser();
+        if (!$user instanceof User) {
+            return false;
+        }
+
         /** @var Inventory $inventory */
         $inventory = $subject;
-        $user = $token->getUser();
 
-        // 1) Guest
-        if (!$user instanceof User) {
-            return $attribute === self::VIEW && $inventory->isPublic();
-        }
-
-        // 2) Admin
-        if (\in_array('ROLE_ADMIN', $user->getRoles(), true)) {
-            return true;
-        }
-
-        // 3) Owner
+        // 1️Владелец — всегда полный доступ
         if ($inventory->getOwner()->getId() === $user->getId()) {
             return true;
         }
 
-        // 4) ACL
+        // 2️Публичный инвентарь — только просмотр
+        if ($attribute === self::VIEW && $inventory->isPublic()) {
+            return true;
+        }
+
+        // 3️.ACL
         $access = $this->accessRepository->findOneBy([
             'inventory' => $inventory,
             'user' => $user,
         ]);
 
-        if (!$access) {
+        if (!$access instanceof InventoryAccess) {
             return false;
         }
 
         return match ($attribute) {
             self::VIEW => true,
-            self::CREATE_ITEM,
-            self::EDIT_ITEM,
-            self::DELETE_ITEM => $access->getPermission() === InventoryAccess::PERMISSION_WRITE,
-            self::MANAGE_ACCESS => false,
+            self::EDIT,
+            self::MANAGE_FIELDS => $access->getPermission() === InventoryAccess::WRITE,
             default => false,
         };
     }

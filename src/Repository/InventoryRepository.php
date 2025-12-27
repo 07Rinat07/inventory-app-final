@@ -16,28 +16,21 @@ class InventoryRepository extends ServiceEntityRepository
         parent::__construct($registry, Inventory::class);
     }
 
-//    /**
-//     * @return Inventory[] Returns an array of Inventory objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('i')
-//            ->andWhere('i.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('i.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    public function findAvailableForUser(User $user): array
+    {
+        return $this->createQueryBuilder('i')
+            ->leftJoin('i.accesses', 'a')
+            ->andWhere('i.owner = :user OR i.isPublic = true OR a.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('i.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 
-//    public function findOneBySomeField($value): ?Inventory
-//    {
-//        return $this->createQueryBuilder('i')
-//            ->andWhere('i.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    public function save(Inventory $inventory): void
+    {
+        $this->_em->persist($inventory);
+        $this->_em->flush();
+    }
+
 }

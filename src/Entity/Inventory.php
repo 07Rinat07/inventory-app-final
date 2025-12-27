@@ -57,9 +57,16 @@ class Inventory
     #[ORM\OrderBy(['position' => 'ASC'])]
     private Collection $idFormatParts;
 
+    /**
+     * @var Collection<int, CustomField>
+     */
+    #[ORM\OneToMany(targetEntity: CustomField::class, mappedBy: 'inventory', orphanRemoval: true)]
+    private Collection $customFields;
+
     public function __construct()
     {
         $this->idFormatParts = new ArrayCollection();
+        $this->customFields = new ArrayCollection();
     }
 
     // ---------------- getters / setters ----------------
@@ -113,5 +120,35 @@ class Inventory
     public function getIdFormatParts(): Collection
     {
         return $this->idFormatParts;
+    }
+
+    /**
+     * @return Collection<int, CustomField>
+     */
+    public function getCustomFields(): Collection
+    {
+        return $this->customFields;
+    }
+
+    public function addCustomField(CustomField $customField): static
+    {
+        if (!$this->customFields->contains($customField)) {
+            $this->customFields->add($customField);
+            $customField->setInventory($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCustomField(CustomField $customField): static
+    {
+        if ($this->customFields->removeElement($customField)) {
+            // set the owning side to null (unless already changed)
+            if ($customField->getInventory() === $this) {
+                $customField->setInventory(null);
+            }
+        }
+
+        return $this;
     }
 }

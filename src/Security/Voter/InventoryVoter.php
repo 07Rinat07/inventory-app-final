@@ -19,16 +19,17 @@ final class InventoryVoter extends Voter
 
     public function __construct(
         private InventoryAccessRepository $accessRepository,
-    ) {}
+    ) {
+    }
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return in_array($attribute, [
+        return $subject instanceof Inventory
+            && in_array($attribute, [
                 self::VIEW,
                 self::EDIT,
                 self::MANAGE_FIELDS,
-            ], true)
-            && $subject instanceof Inventory;
+            ], true);
     }
 
     protected function voteOnAttribute(
@@ -44,17 +45,17 @@ final class InventoryVoter extends Voter
         /** @var Inventory $inventory */
         $inventory = $subject;
 
-        // 1️Владелец — всегда полный доступ
+        // 1. Owner — always full access
         if ($inventory->getOwner()->getId() === $user->getId()) {
             return true;
         }
 
-        // 2️Публичный инвентарь — только просмотр
+        // 2. Public inventory — view only
         if ($attribute === self::VIEW && $inventory->isPublic()) {
             return true;
         }
 
-        // 3️.ACL
+        // 3. ACL-based access
         $access = $this->accessRepository->findOneBy([
             'inventory' => $inventory,
             'user' => $user,

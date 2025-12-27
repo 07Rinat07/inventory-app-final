@@ -4,8 +4,10 @@
 
 ---
 
-![](https://media.giphy.com/media/dWesBcTLavkZuG35MI/giphy.gif)
+<div align="center">
+  <img src="https://media.giphy.com/media/dWesBcTLavkZuG35MI/giphy.gif" width="600" height="300"/>
+</div>
 
 ---
 
-## Inventory App - final ver — проект for itransition (Symfony).
+## Inventory App - final ver — проект for Itransition (Symfony).

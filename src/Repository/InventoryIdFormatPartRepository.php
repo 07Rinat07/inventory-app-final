@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repository;
 
+use App\Entity\Inventory;
 use App\Entity\InventoryIdFormatPart;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -9,35 +12,43 @@ use Doctrine\Persistence\ManagerRegistry;
 /**
  * @extends ServiceEntityRepository<InventoryIdFormatPart>
  */
-class InventoryIdFormatPartRepository extends ServiceEntityRepository
+final class InventoryIdFormatPartRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, InventoryIdFormatPart::class);
     }
 
-    //    /**
-    //     * @return InventoryIdFormatPart[] Returns an array of InventoryIdFormatPart objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('i')
-    //            ->andWhere('i.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('i.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    /**
+     * Возвращает части формата ID в правильном порядке
+     *
+     * Используется:
+     * - FORMAT_UI
+     * - CustomIdGenerator
+     * - API Provider
+     */
+    public function findOrderedByInventory(Inventory $inventory): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.inventory = :inventory')
+            ->setParameter('inventory', $inventory)
+            ->orderBy('p.position', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 
-    //    public function findOneBySomeField($value): ?InventoryIdFormatPart
-    //    {
-    //        return $this->createQueryBuilder('i')
-    //            ->andWhere('i.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    /**
+     * Удаляет все части формата для инвентаря
+     *
+     * Используется при reorder / save
+     */
+    public function deleteByInventory(Inventory $inventory): void
+    {
+        $this->createQueryBuilder('p')
+            ->delete()
+            ->andWhere('p.inventory = :inventory')
+            ->setParameter('inventory', $inventory)
+            ->getQuery()
+            ->execute();
+    }
 }

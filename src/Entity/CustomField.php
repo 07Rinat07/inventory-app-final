@@ -21,8 +21,7 @@ use Doctrine\ORM\Mapping as ORM;
 class CustomField
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue(strategy: 'SEQUENCE')]
-    #[ORM\SequenceGenerator(sequenceName: 'custom_fields_id_seq', allocationSize: 1, initialValue: 1)]
+    #[ORM\GeneratedValue] // В Postgres нормально работает с IDENTITY/DEFAULT
     #[ORM\Column(type: 'integer')]
     private ?int $id = null;
 
@@ -39,10 +38,6 @@ class CustomField
     #[ORM\Column(type: 'boolean')]
     private bool $isRequired = false;
 
-    /**
-     * Обязательные поля задаём через constructor,
-     * чтобы сущность не была "полупустой".
-     */
     public function __construct(Inventory $inventory, CustomFieldType $type, int $position)
     {
         $this->inventory = $inventory;

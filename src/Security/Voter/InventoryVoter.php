@@ -15,28 +15,26 @@ final class InventoryVoter extends Voter
 {
     public const VIEW = 'INVENTORY_VIEW';
     public const EDIT = 'INVENTORY_EDIT';
+    public const DELETE = 'INVENTORY_DELETE';
     public const MANAGE_FIELDS = 'INVENTORY_MANAGE_FIELDS';
 
     public function __construct(
-        private InventoryAccessRepository $accessRepository,
-    ) {
-    }
+        private readonly InventoryAccessRepository $accessRepository,
+    ) {}
 
     protected function supports(string $attribute, mixed $subject): bool
     {
         return $subject instanceof Inventory
-            && in_array($attribute, [
+            && \in_array($attribute, [
                 self::VIEW,
                 self::EDIT,
+                self::DELETE,
                 self::MANAGE_FIELDS,
             ], true);
     }
 
-    protected function voteOnAttribute(
-        string $attribute,
-        mixed $subject,
-        TokenInterface $token
-    ): bool {
+    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
+    {
         $user = $token->getUser();
         if (!$user instanceof User) {
             return false;
@@ -45,17 +43,22 @@ final class InventoryVoter extends Voter
         /** @var Inventory $inventory */
         $inventory = $subject;
 
-        // 1. Owner — always full access
+        // Админ — полный доступ
+        if (\in_array('ROLE_ADMIN', $user->getRoles(), true)) {
+            return true;
+        }
+
+        // Owner — полный доступ
         if ($inventory->getOwner()->getId() === $user->getId()) {
             return true;
         }
 
-        // 2. Public inventory — view only
+        // Public — только VIEW
         if ($attribute === self::VIEW && $inventory->isPublic()) {
             return true;
         }
 
-        // 3. ACL-based access
+        // ACL
         $access = $this->accessRepository->findOneBy([
             'inventory' => $inventory,
             'user' => $user,
@@ -68,7 +71,8 @@ final class InventoryVoter extends Voter
         return match ($attribute) {
             self::VIEW => true,
             self::EDIT,
-            self::MANAGE_FIELDS => $access->getPermission() === InventoryAccess::WRITE,
+            self::DELETE,
+            self::MANAGE_FIELDS => $access->getPermission() === InventoryAccess::PERMISSION_WRITE,
             default => false,
         };
     }

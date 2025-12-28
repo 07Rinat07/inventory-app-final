@@ -1,0 +1,60 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inventory{% endblock %}
+
+{% block body %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3 class="mb-0">{{ inventory.name }}</h3>
+      <div class="text-muted small">
+        Owner: {{ inventory.owner.email }} · Public: {{ inventory.isPublic ? 'Yes' : 'No' }}
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <a href="{{ path('inventory_index') }}" class="btn btn-outline-secondary">Back</a>
+
+      {% if is_granted('INVENTORY_EDIT', inventory) %}
+        <a href="{{ path('inventory_edit', {id: inventory.id}) }}" class="btn btn-primary">Edit</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+
+      <div class="d-flex flex-wrap gap-2">
+        {% if is_granted('INVENTORY_EDIT', inventory) %}
+          <a class="btn btn-outline-secondary"
+             href="{{ path('inventory_id_format_edit', {id: inventory.id}) }}">
+            Custom ID format
+          </a>
+
+          {# ВАЖНО: custom_field_index , скорее всего, нет. #}
+          <a class="btn btn-outline-secondary"
+             href="{{ path('inventory_custom_fields_new', {id: inventory.id}) }}">
+            Custom fields
+          </a>
+        {% endif %}
+
+        {% if is_granted('INVENTORY_DELETE', inventory) %}
+          <form method="post"
+                action="{{ path('inventory_delete', {id: inventory.id}) }}"
+                class="d-inline"
+                onsubmit="return confirm('Delete inventory &quot;{{ inventory.name|e('js') }}&quot;?');">
+            <input type="hidden" name="_token" value="{{ csrf_token('inventory_delete_' ~ inventory.id) }}">
+            <button class="btn btn-outline-danger" type="submit">Delete</button>
+          </form>
+        {% endif %}
+      </div>
+
+      <hr>
+
+      <div class="text-muted">
+        Здесь позже будет деталка инвентаря (items, обсуждения, лайки, autosave и т.д.).
+        Сейчас — корректная точка расширения: ACL + навигация + сущность.
+      </div>
+
+    </div>
+  </div>
+{% endblock %}

@@ -20,33 +20,38 @@ class Inventory
     private ?int $id = null;
 
     /**
-     * Владелец инвентаря
+     * Владелец инвентаря.
+     * ManyToOne: много инвентарей принадлежат одному пользователю.
+     * inversedBy полезен, если в User есть коллекция inventories.
      */
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'inventories')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private User $owner;
 
     /**
-     * Название инвентаря
+     * Название инвентаря.
      */
     #[ORM\Column(length: 255)]
-    private string $name;
+    private string $name = '';
 
     /**
-     * Публичный ли инвентарь
+     * Публичный ли инвентарь.
      */
     #[ORM\Column(name: 'is_public', type: 'boolean')]
     private bool $isPublic = false;
 
     /**
-     * Optimistic locking
+     * Optimistic locking.
      */
     #[ORM\Version]
     #[ORM\Column(type: 'integer')]
     private int $version = 1;
 
     /**
-     * Формат кастомного ID (упорядоченные части)
+     * Формат кастомного ID (упорядоченные части).
+     *
+     * orphanRemoval=true:
+     * - если Part убрать из коллекции и сделать flush — строка удалится из БД.
      */
     #[ORM\OneToMany(
         mappedBy: 'inventory',
@@ -55,12 +60,22 @@ class Inventory
         orphanRemoval: true
     )]
     #[ORM\OrderBy(['position' => 'ASC'])]
+    /** @var Collection<int, InventoryIdFormatPart> */
     private Collection $idFormatParts;
 
     /**
-     * @var Collection<int, CustomField>
+     * Кастомные поля инвентаря.
+     *
+     * orphanRemoval=true:
+     * - если CustomField убрать из коллекции и сделать flush — строка удалится из БД.
      */
-    #[ORM\OneToMany(targetEntity: CustomField::class, mappedBy: 'inventory', orphanRemoval: true)]
+    #[ORM\OneToMany(
+        mappedBy: 'inventory',
+        targetEntity: CustomField::class,
+        cascade: ['persist', 'remove'],
+        orphanRemoval: true
+    )]
+    /** @var Collection<int, CustomField> */
     private Collection $customFields;
 
     public function __construct()
@@ -69,7 +84,7 @@ class Inventory
         $this->customFields = new ArrayCollection();
     }
 
-    // ---------------- getters / setters ----------------
+    // ---------------- base getters / setters ----------------
 
     public function getId(): ?int
     {
@@ -94,7 +109,7 @@ class Inventory
 
     public function setName(string $name): self
     {
-        $this->name = $name;
+        $this->name = trim($name);
         return $this;
     }
 
@@ -114,6 +129,8 @@ class Inventory
         return $this->version;
     }
 
+    // ---------------- ID format parts ----------------
+
     /**
      * @return Collection<int, InventoryIdFormatPart>
      */
@@ -121,6 +138,28 @@ class Inventory
     {
         return $this->idFormatParts;
     }
+
+    public function addIdFormatPart(InventoryIdFormatPart $part): self
+    {
+        if (!$this->idFormatParts->contains($part)) {
+            $this->idFormatParts->add($part);
+            // owning-side (в InventoryIdFormatPart) должен ссылаться на Inventory
+            $part->setInventory($this);
+        }
+
+        return $this;
+    }
+
+    public function removeIdFormatPart(InventoryIdFormatPart $part): self
+    {
+        // НЕ делаем $part->setInventory(null) — joinColumn nullable=false.
+        // orphanRemoval=true удалит строку из БД при flush.
+        $this->idFormatParts->removeElement($part);
+
+        return $this;
+    }
+
+    // ---------------- Custom fields ----------------
 
     /**
      * @return Collection<int, CustomField>
@@ -130,24 +169,22 @@ class Inventory
         return $this->customFields;
     }
 
-    public function addCustomField(CustomField $customField): static
+    public function addCustomField(CustomField $customField): self
     {
         if (!$this->customFields->contains($customField)) {
             $this->customFields->add($customField);
+            // owning-side (в CustomField) должен ссылаться на Inventory
             $customField->setInventory($this);
         }
 
         return $this;
     }
 
-    public function removeCustomField(CustomField $customField): static
+    public function removeCustomField(CustomField $customField): self
     {
-        if ($this->customFields->removeElement($customField)) {
-            // set the owning side to null (unless already changed)
-            if ($customField->getInventory() === $this) {
-                $customField->setInventory(null);
-            }
-        }
+        // НЕ делаем $customField->setInventory(null) — joinColumn nullable=false.
+        // orphanRemoval=true удалит строку из БД при flush.
+        $this->customFields->removeElement($customField);
 
         return $this;
     }

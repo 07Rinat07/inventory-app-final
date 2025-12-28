@@ -21,37 +21,34 @@ use Doctrine\ORM\Mapping as ORM;
 class CustomField
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\GeneratedValue(strategy: 'SEQUENCE')]
+    #[ORM\SequenceGenerator(sequenceName: 'custom_fields_id_seq', allocationSize: 1, initialValue: 1)]
+    #[ORM\Column(type: 'integer')]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(
-        targetEntity: Inventory::class,
-        inversedBy: 'customFields'
-    )]
+    #[ORM\ManyToOne(targetEntity: Inventory::class, inversedBy: 'customFields')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Inventory $inventory;
 
-    /**
-     * Тип пользовательского поля.
-     * Храним string в БД, используем enum в домене.
-     */
     #[ORM\Column(type: 'string', length: 20)]
     private string $type;
 
-    /**
-     * Позиция поля внутри inventory (для drag & drop reorder).
-     */
     #[ORM\Column(type: 'integer')]
     private int $position;
 
-    /**
-     * Обязательное ли поле.
-     */
     #[ORM\Column(type: 'boolean')]
     private bool $isRequired = false;
 
-    // ---------------- getters / setters ----------------
+    /**
+     * Обязательные поля задаём через constructor,
+     * чтобы сущность не была "полупустой".
+     */
+    public function __construct(Inventory $inventory, CustomFieldType $type, int $position)
+    {
+        $this->inventory = $inventory;
+        $this->type = $type->value;
+        $this->position = $position;
+    }
 
     public function getId(): ?int
     {

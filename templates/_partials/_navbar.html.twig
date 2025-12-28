@@ -1,0 +1,53 @@
+{# templates/_partials/_navbar.html.twig #}
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    {# “бренд” ведёт на список инвентарей #}
+    <a class="navbar-brand" href="{{ path('inventory_index') }}">
+      Inventory App
+    </a>
+
+    <button class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#mainNavbar"
+            aria-controls="mainNavbar"
+            aria-expanded="false"
+            aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="mainNavbar">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        {# Ссылка доступна всем залогиненным #}
+        <li class="nav-item">
+          <a class="nav-link" href="{{ path('inventory_index') }}">Inventories</a>
+        </li>
+
+      </ul>
+
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+        {% if app.user %}
+          <li class="nav-item">
+            <span class="navbar-text text-white-50 me-3">
+              {{ app.user.userIdentifier }}
+            </span>
+          </li>
+
+          {# Logout: делаем POST-формой (правильнее и безопаснее) #}
+          <li class="nav-item">
+            <form action="{{ path('app_logout') }}" method="post" class="d-inline">
+              {# Если у тебя в security logout включён csrf_token_id: logout (у тебя так и есть) #}
+              <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+              <button class="btn btn-outline-light btn-sm" type="submit">Logout</button>
+            </form>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="btn btn-outline-light btn-sm" href="{{ path('app_login') }}">Login</a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>

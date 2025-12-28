@@ -1,71 +1,91 @@
 {% extends 'base.html.twig' %}
 
+{% block title %}Custom ID format{% endblock %}
+
 {% block body %}
-  <div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3 class="mb-0">Custom ID format</h3>
+      <div class="text-muted small">
+        Inventory: <strong>{{ inventory.name }}</strong>
+      </div>
+    </div>
 
-    <h3>Custom ID format</h3>
-
-    <form method="post">
-      <table class="table table-bordered">
-        <thead>
-        <tr>
-          <th></th>
-          <th>Type</th>
-          <th>Param 1</th>
-          <th>Param 2</th>
-        </tr>
-        </thead>
-
-        <tbody id="format-parts">
-        {% for part in format.getParts %}
-          <tr draggable="true" data-index="{{ loop.index0 }}">
-            <td class="text-muted">☰</td>
-            <td>
-              {{ part.type }}
-              <input type="hidden" name="parts[{{ loop.index0 }}][type]" value="{{ part.type }}">
-            </td>
-            <td>
-              {{ part.param1 }}
-              <input type="hidden" name="parts[{{ loop.index0 }}][param1]" value="{{ part.param1 }}">
-            </td>
-            <td>
-              {{ part.param2 }}
-              <input type="hidden" name="parts[{{ loop.index0 }}][param2]" value="{{ part.param2 }}">
-            </td>
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-
-      <button class="btn btn-primary">Save</button>
-    </form>
+    <a href="{{ path('inventory_index') }}" class="btn btn-outline-secondary">Back</a>
   </div>
 
-  <script>
-    const tbody = document.getElementById('format-parts');
-    let draggedRow = null;
+  <div class="card shadow-sm">
+    <div class="card-body">
 
-    tbody.addEventListener('dragstart', e => {
-      draggedRow = e.target.closest('tr');
-      e.dataTransfer.effectAllowed = 'move';
-    });
+      <form method="post" class="vstack gap-3">
+        {#
+        ВАЖНО:
+        имена part_type[] param1[] param2[] должны совпадать с контроллером
+        #}
 
-    tbody.addEventListener('dragover', e => {
-      e.preventDefault();
-      const targetRow = e.target.closest('tr');
-      if (targetRow && targetRow !== draggedRow) {
-        const rect = targetRow.getBoundingClientRect();
-        const next = (e.clientY - rect.top) > rect.height / 2;
-        tbody.insertBefore(draggedRow, next ? targetRow.nextSibling : targetRow);
-      }
-    });
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead class="table-light">
+            <tr>
+              <th style="width: 220px;">Part type</th>
+              <th>Param 1</th>
+              <th>Param 2</th>
+            </tr>
+            </thead>
 
-    tbody.addEventListener('dragend', () => {
-      [...tbody.children].forEach((row, index) => {
-        row.querySelectorAll('input').forEach(input => {
-          input.name = input.name.replace(/parts\[\d+]/, `parts[${index}]`);
-        });
-      });
-    });
-  </script>
+            <tbody>
+            {# существующие части #}
+            {% for part in parts %}
+              <tr>
+                <td>
+                  <select class="form-select" name="part_type[]">
+                    <option value="">-- select --</option>
+                    {% for t in partTypes %}
+                      <option value="{{ t.value }}"
+                              {% if part.type is defined and part.type == t.value %}selected{% endif %}
+                        {% if part.type is not defined and part.type is same as(t) %}selected{% endif %}
+                      >
+                        {{ t.name }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </td>
+                <td>
+                  <input class="form-control" name="param1[]" value="{{ part.param1|default('') }}">
+                </td>
+                <td>
+                  <input class="form-control" name="param2[]" value="{{ part.param2|default('') }}">
+                </td>
+              </tr>
+            {% endfor %}
+
+            {# + одна пустая строка, чтобы можно было быстро добавить новый part #}
+            <tr>
+              <td>
+                <select class="form-select" name="part_type[]">
+                  <option value="" selected>-- select --</option>
+                  {% for t in partTypes %}
+                    <option value="{{ t.value }}">{{ t.name }}</option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td><input class="form-control" name="param1[]" value=""></td>
+              <td><input class="form-control" name="param2[]" value=""></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button class="btn btn-primary" type="submit">Save</button>
+          <a href="{{ path('inventory_index') }}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+
+        <div class="text-muted small">
+          Tip: leave “Part type” empty to ignore that row.
+        </div>
+      </form>
+
+    </div>
+  </div>
 {% endblock %}

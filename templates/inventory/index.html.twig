@@ -1,37 +1,76 @@
+{# templates/inventory/index.html.twig #}
 {% extends 'base.html.twig' %}
 
+{% block title %}Inventories{% endblock %}
+
 {% block body %}
-  <div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Inventories</h1>
+    <a href="{{ path('inventory_create') }}" class="btn btn-primary">Create</a>
+  </div>
 
-    <div class="d-flex justify-content-between mb-3">
-      <h3>Inventories</h3>
-      <a href="{{ path('inventory_create') }}" class="btn btn-primary">Create</a>
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped align-middle mb-0">
+          <thead>
+          <tr>
+            <th>Name</th>
+            <th>Owner</th>
+            <th>Public</th>
+            <th class="text-end">Actions</th>
+          </tr>
+          </thead>
+
+          <tbody>
+          {% for inventory in inventories %}
+            <tr>
+              <td class="fw-semibold">{{ inventory.name }}</td>
+              <td class="text-muted">{{ inventory.owner.email }}</td>
+              <td>{{ inventory.isPublic ? 'Yes' : 'No' }}</td>
+
+              <td class="text-end">
+                <div class="d-inline-flex gap-2">
+
+                  {% if is_granted('INVENTORY_VIEW', inventory) %}
+                    <a href="{{ path('inventory_show', {id: inventory.id}) }}"
+                       class="btn btn-sm btn-outline-secondary">View</a>
+                  {% endif %}
+
+                  {% if is_granted('INVENTORY_EDIT', inventory) %}
+                    <a href="{{ path('inventory_edit', {id: inventory.id}) }}"
+                       class="btn btn-sm btn-outline-primary">Edit</a>
+                  {% endif %}
+
+                  {% if is_granted('INVENTORY_EDIT', inventory) %}
+                    <a href="{{ path('inventory_id_format_edit', {id: inventory.id}) }}"
+                       class="btn btn-sm btn-outline-secondary">ID format</a>
+                  {% endif %}
+
+                  {% if is_granted('INVENTORY_DELETE', inventory) %}
+                    <form method="post"
+                          action="{{ path('inventory_delete', {id: inventory.id}) }}"
+                          class="d-inline"
+                          onsubmit="return confirm('Delete inventory &quot;{{ inventory.name|e('js') }}&quot;? This cannot be undone.');">
+                      {# ВАЖНО: имя поля должно совпадать с контроллером: _csrf_token #}
+                      <input type="hidden" name="_csrf_token"
+                             value="{{ csrf_token('inventory_delete_' ~ inventory.id) }}">
+                      <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                    </form>
+                  {% endif %}
+
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="4" class="text-muted">No inventories yet.</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+
+        </table>
+      </div>
     </div>
-
-    <table class="table table-striped">
-      <tr>
-        <th>Name</th>
-        <th>Owner</th>
-        <th>Public</th>
-        <th></th>
-      </tr>
-
-      {% for inventory in inventories %}
-        <tr>
-          <td>{{ inventory.name }}</td>
-          <td>{{ inventory.owner.email }}</td>
-          <td>{{ inventory.isPublic ? 'Yes' : 'No' }}</td>
-          <td>
-            {% if is_granted('INVENTORY_VIEW', inventory) %}
-              <a href="#" class="btn btn-sm btn-outline-secondary">View</a>
-            {% endif %}
-            {% if is_granted('INVENTORY_EDIT', inventory) %}
-              <a href="#" class="btn btn-sm btn-outline-primary">Edit</a>
-            {% endif %}
-          </td>
-        </tr>
-      {% endfor %}
-    </table>
-
   </div>
 {% endblock %}

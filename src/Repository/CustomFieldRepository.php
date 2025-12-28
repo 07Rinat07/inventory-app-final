@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
-use App\Domain\Enum\CustomFieldType;
+use App\Domain\CustomField\CustomFieldType;
 use App\Entity\CustomField;
 use App\Entity\Inventory;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -12,12 +12,16 @@ use Doctrine\Persistence\ManagerRegistry;
 
 final class CustomFieldRepository extends ServiceEntityRepository
 {
+    public const TYPE_LIMIT_PER_INVENTORY = 3;
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, CustomField::class);
     }
 
     /**
+     * Поля инвентаря в правильном порядке.
+     *
      * @return CustomField[]
      */
     public function findByInventoryOrdered(Inventory $inventory): array
@@ -31,10 +35,25 @@ final class CustomFieldRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    public function countByInventoryAndType(
-        Inventory $inventory,
-        CustomFieldType $type
-    ): int {
+    /**
+     * Сколько полей всего у инвентаря.
+     */
+    public function countByInventory(Inventory $inventory): int
+    {
+        return (int) $this->createQueryBuilder('f')
+            ->select('COUNT(f.id)')
+            ->andWhere('f.inventory = :inv')
+            ->setParameter('inv', $inventory)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Сколько полей конкретного типа уже есть у inventory.
+     * Полезно под лимиты “до 3 полей каждого типа”.
+     */
+    public function countByInventoryAndType(Inventory $inventory, CustomFieldType $type): int
+    {
         return (int) $this->createQueryBuilder('f')
             ->select('COUNT(f.id)')
             ->andWhere('f.inventory = :inv')
@@ -45,6 +64,17 @@ final class CustomFieldRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
     }
 
+    /**
+     * Проверка лимита: “не больше 3 полей каждого типа на inventory”.
+     */
+    public function hasReachedTypeLimit(Inventory $inventory, CustomFieldType $type): bool
+    {
+        return $this->countByInventoryAndType($inventory, $type) >= self::TYPE_LIMIT_PER_INVENTORY;
+    }
+
+    /**
+     * Следующая позиция: max(position) + 1.
+     */
     public function getNextPosition(Inventory $inventory): int
     {
         $max = $this->createQueryBuilder('f')
@@ -57,8 +87,28 @@ final class CustomFieldRepository extends ServiceEntityRepository
         return ((int) $max) + 1;
     }
 
+    public function save(CustomField $field, bool $flush = true): void
+    {
+        $em = $this->getEntityManager();
+        $em->persist($field);
+
+        if ($flush) {
+            $em->flush();
+        }
+    }
+
+    public function remove(CustomField $field, bool $flush = true): void
+    {
+        $em = $this->getEntityManager();
+        $em->remove($field);
+
+        if ($flush) {
+            $em->flush();
+        }
+    }
+
     /**
-     * Bulk delete (toolbar action)
+     * Bulk delete (на будущее под toolbar actions).
      *
      * @param int[] $ids
      */

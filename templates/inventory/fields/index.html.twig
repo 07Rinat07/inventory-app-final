@@ -1,94 +1,82 @@
-{% block javascripts %}
-  {{ parent() }}
+{% extends 'base.html.twig' %}
 
-  <script>
-    const tbody = document.getElementById('fields-sortable');
-    const saveButton = document.getElementById('save-order-btn');
+{% block title %}Custom fields{% endblock %}
 
-    if (!tbody || !saveButton) {
-      console.warn('Reorder UI not initialized: missing elements');
-      return;
-    }
+{% block body %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h1 class="h3 mb-0">Custom fields</h1>
+      <div class="text-muted small">
+        Inventory: <span class="fw-semibold">{{ inventory.name }}</span>
+      </div>
+    </div>
 
-    let draggedRow = null;
+    <div class="d-flex gap-2">
+      <a href="{{ path('inventory_show', {id: inventory.id}) }}" class="btn btn-outline-secondary">Back</a>
+      <a href="{{ path('inventory_custom_fields_new', {id: inventory.id}) }}" class="btn btn-primary">Add field</a>
+    </div>
+  </div>
 
-    // Сделать строки draggable
-    tbody.querySelectorAll('tr').forEach(row => {
-      row.setAttribute('draggable', 'true');
-    });
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped align-middle mb-0">
+          <thead>
+          <tr>
+            <th style="width: 90px;">Pos</th>
+            <th>Type</th>
+            <th style="width: 140px;">Required</th>
+            <th class="text-end" style="width: 220px;">Actions</th>
+          </tr>
+          </thead>
 
-    // ---------------- Drag & Drop ----------------
+          <tbody>
+          {% for f in fields %}
+            <tr>
+              <td class="text-muted">{{ f.position }}</td>
 
-    tbody.addEventListener('dragstart', event => {
-      draggedRow = event.target.closest('tr');
-      if (!draggedRow) return;
+              <td class="fw-semibold">
+                {# getType(): CustomFieldType, у enum есть метод label() #}
+                {{ f.type.label() }}
+                <div class="text-muted small">Key: <code>{{ f.type.value }}</code></div>
+              </td>
 
-      draggedRow.classList.add('table-active');
-      event.dataTransfer.effectAllowed = 'move';
-    });
+              <td>
+                {% if f.required %}
+                  <span class="badge text-bg-danger">Required</span>
+                {% else %}
+                  <span class="badge text-bg-secondary">Optional</span>
+                {% endif %}
+              </td>
 
-    tbody.addEventListener('dragend', () => {
-      if (draggedRow) {
-        draggedRow.classList.remove('table-active');
-        draggedRow = null;
-      }
-    });
+              <td class="text-end">
+                <div class="d-inline-flex gap-2">
+                  <a class="btn btn-sm btn-outline-primary"
+                     href="{{ path('inventory_custom_fields_edit', {id: inventory.id, fieldId: f.id}) }}">
+                    Edit
+                  </a>
 
-    tbody.addEventListener('dragover', event => {
-      event.preventDefault();
+                  <form method="post"
+                        class="d-inline"
+                        action="{{ path('inventory_custom_fields_delete', {id: inventory.id, fieldId: f.id}) }}"
+                        onsubmit="return confirm('Delete this field?');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('custom_field_delete_' ~ f.id) }}">
+                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="4" class="text-muted">
+                No custom fields yet. Click <strong>Add field</strong> to create the first one.
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
 
-      const targetRow = event.target.closest('tr');
-      if (!targetRow || targetRow === draggedRow) return;
-
-      const rect = targetRow.getBoundingClientRect();
-      const shouldInsertAfter =
-        (event.clientY - rect.top) / rect.height > 0.5;
-
-      tbody.insertBefore(
-        draggedRow,
-        shouldInsertAfter ? targetRow.nextSibling : targetRow
-      );
-
-      // Активируем кнопку при изменении порядка
-      saveButton.disabled = false;
-      saveButton.classList.remove('btn-success');
-      saveButton.classList.add('btn-primary');
-      saveButton.textContent = 'Save order';
-    });
-
-    // ---------------- Save order ----------------
-
-    saveButton.addEventListener('click', async () => {
-      const order = Array.from(
-        tbody.querySelectorAll('tr')
-      ).map(row => row.dataset.id);
-
-      try {
-        const response = await fetch(
-          '{{ path('inventory_custom_fields_reorder', { id: inventory.id }) }}',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify({ order })
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error('Server error');
-        }
-
-        saveButton.classList.remove('btn-primary');
-        saveButton.classList.add('btn-success');
-        saveButton.textContent = 'Saved';
-        saveButton.disabled = true;
-
-      } catch (e) {
-        alert('Failed to save order');
-        console.error(e);
-      }
-    });
-  </script>
+        </table>
+      </div>
+    </div>
+  </div>
 {% endblock %}

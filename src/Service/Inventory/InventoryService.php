@@ -22,15 +22,29 @@ final class InventoryService
         return $this->repository->findAvailableForUser($user);
     }
 
-    public function create(User $user, string $name, bool $isPublic): Inventory
+    public function create(User $owner, string $name, bool $isPublic): Inventory
     {
         $inventory = new Inventory();
-        $inventory->setOwner($user);
+        $inventory->setOwner($owner);
         $inventory->setName($name);
         $inventory->setIsPublic($isPublic);
 
-        $this->repository->save($inventory);
+        // Важно: flush здесь, иначе в БД не появится запись.
+        $this->repository->save($inventory, flush: true);
 
         return $inventory;
+    }
+
+    public function update(Inventory $inventory, string $name, bool $isPublic): void
+    {
+        $inventory->setName($name);
+        $inventory->setIsPublic($isPublic);
+
+        $this->repository->save($inventory, flush: true);
+    }
+
+    public function delete(Inventory $inventory): void
+    {
+        $this->repository->remove($inventory, flush: true);
     }
 }

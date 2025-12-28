@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -53,6 +57,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column(length: 10, options: ['default' => 'en'])]
     private string $locale = 'en';
+
+    /**
+     * Инвентари пользователя (inverse-side для Inventory::$owner).
+     *
+     * Важно:
+     * - owning side находится в Inventory::$owner (ManyToOne)
+     * - это поле нужно Doctrine, потому что в Inventory стоит inversedBy="inventories"
+     *
+     * @var Collection<int, Inventory>
+     */
+    #[ORM\OneToMany(mappedBy: 'owner', targetEntity: Inventory::class)]
+    private Collection $inventories;
+
+    public function __construct()
+    {
+        // Инициализация коллекций — обязательна, иначе будут null/ошибки при add/remove
+        $this->inventories = new ArrayCollection();
+    }
 
     // -------------------------
     // Identifiers
@@ -148,6 +170,41 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->locale = \in_array($locale, ['en', 'ru'], true)
             ? $locale
             : 'en';
+
+        return $this;
+    }
+
+    // -------------------------
+    // Inventories (inverse side)
+    // -------------------------
+
+    /**
+     * @return Collection<int, Inventory>
+     */
+    public function getInventories(): Collection
+    {
+        return $this->inventories;
+    }
+
+    public function addInventory(Inventory $inventory): self
+    {
+        if (!$this->inventories->contains($inventory)) {
+            $this->inventories->add($inventory);
+
+            // owning-side: Inventory::$owner
+            // важно держать обе стороны синхронно (канонично для Doctrine)
+            $inventory->setOwner($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInventory(Inventory $inventory): self
+    {
+        // Важно: Inventory::$owner = NOT NULL, поэтому setOwner(null) делать нельзя.
+        // Если нужно “убрать” инвентарь у пользователя — это операция уровня сервиса:
+        // либо delete inventory, либо assign другого owner.
+        $this->inventories->removeElement($inventory);
 
         return $this;
     }

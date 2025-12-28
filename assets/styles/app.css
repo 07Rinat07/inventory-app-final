@@ -1,3 +1,21 @@
+/* assets/styles/app.css */
+
+/*
+  ВАЖНО:
+  Bootstrap CSS подключаем через <link> в base.html.twig (CDN),
+  поэтому здесь НЕ делаем @import "bootstrap/...".
+*/
+
 body {
-    background-color: skyblue;
+    background: #f6f7f9;
+}
+
+/* Чуть “дороже” вид карточек/таблиц */
+.card {
+    border: 1px solid rgba(0,0,0,.08);
+}
+
+/* Единый вид flash-алертов */
+.alert {
+    margin-bottom: 1rem;
 }

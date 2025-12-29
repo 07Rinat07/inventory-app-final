@@ -16,10 +16,10 @@
     <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
   {% endblock %}
 
-  {# JS через importmap (как у тебя) #}
   {% block javascripts %}
-    {% block importmap %}{{ importmap('app') }}{% endblock %}
+    <script type="module" src="{{ asset('app.js') }}"></script>
   {% endblock %}
+
 </head>
 
 <body>

@@ -22,7 +22,7 @@ final class InventorySequenceService
      */
     public function nextValue(Inventory $inventory): int
     {
-        return $this->em->transactional(function () use ($inventory): int {
+        return $this->em->wrapInTransaction(function () use ($inventory): int {
             $sequence = $this->repository->findForUpdate($inventory);
 
             if ($sequence === null) {

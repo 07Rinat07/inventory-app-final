@@ -6,15 +6,8 @@ use App\Repository\InventorySequenceRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: InventorySequenceRepository::class)]
-#[ORM\Table(
-    name: 'inventory_sequence',
-    uniqueConstraints: [
-        new ORM\UniqueConstraint(
-            name: 'uniq_inventory_sequence',
-            columns: ['inventory_id']
-        )
-    ]
-)]
+#[ORM\Table(name: 'inventory_sequence')]
+#[ORM\UniqueConstraint(name: 'uniq_inventory_sequence', columns: ['inventory_id'])]
 class InventorySequence
 {
     #[ORM\Id]

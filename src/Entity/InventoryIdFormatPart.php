@@ -9,15 +9,8 @@ use App\Repository\InventoryIdFormatPartRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: InventoryIdFormatPartRepository::class)]
-#[ORM\Table(
-    name: 'inventory_id_format_part',
-    uniqueConstraints: [
-        new ORM\UniqueConstraint(
-            name: 'uniq_inventory_format_position',
-            columns: ['inventory_id', 'position']
-        )
-    ]
-)]
+#[ORM\Table(name: 'inventory_id_format_part')]
+#[ORM\UniqueConstraint(name: 'uniq_inventory_format_position', columns: ['inventory_id', 'position'])]
 class InventoryIdFormatPart
 {
     #[ORM\Id]

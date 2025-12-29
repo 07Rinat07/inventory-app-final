@@ -1,99 +1,127 @@
+# Inventory App
+
+Проект системы управления инвентарем, разработанный на PHP (Symfony 6.4) с использованием PostgreSQL.
+
 ## 👤 Автор
 
-## Rinat Sarmuldin. email--> [ura07srr@gmail.com](mailto:ura07srr@gmail.com)
+**Rinat Sarmuldin**
+Email: [ura07srr@gmail.com](mailto:ura07srr@gmail.com)
 
 ---
 
-<div align="center">
-  <img src="https://media.giphy.com/media/dWesBcTLavkZuG35MI/giphy.gif" width="600" height="300"/>
-</div>
+## 🚀 Требования
+
+Для запуска проекта вам понадобятся:
+- **PHP 8.1** или выше
+- **Composer**
+- **Docker** и **Docker Compose**
+- **Make** (опционально, для удобства)
 
 ---
 
-## Inventory App - final ver — проект for Itransition (Symfony).
+## 🛠 Установка и запуск
 
-#### AppFixtures
-- Явно фиксируем логины/пароли, чтобы не искать в базе.
-- admin@test.com (ROLE_ADMIN)
-- user@test.com (обычный)
-- noaccess@test.com (обычный, без ACL; видит только public)
-#### 1) Установи FixturesBundle (dev/test)
-Выполни в терминале:
-composer require --dev doctrine/doctrine-fixtures-bundle
+Вы можете запустить проект двумя способами: через Docker (рекомендуется) или локально.
 
-Symfony Flex сам подключит бандл в config/bundles.php (обычно в dev/test).
-Проверь, что команда появилась:
+### Способ 1: Через Docker (Быстрый запуск)
 
-php bin/console list doctrine | grep fixtures
+Этот способ автоматически настроит веб-сервер, PHP и базу данных.
 
-Должно быть doctrine:fixtures:load.
+1. **Клонирование репозитория**
+   ```bash
+   git clone <url-репозитория>
+   cd inventory-app-final
+   ```
 
+2. **Запуск контейнеров**
+   ```bash
+   docker compose up -d --build
+   ```
+   *Команда соберет образ, установит зависимости внутри контейнера, выполнит миграции и загрузит фикстуры.*
 
-2) Готовые фикстуры: src/DataFixtures/AppFixtures.php
+3. **Доступ к приложению**
+   Приложение будет доступно по адресу: [http://localhost:8080](http://localhost:8080)
 
-Создай файл src/DataFixtures/AppFixtures.php:
+---
 
-/**
- * в итоге
+### Способ 2: Локальный запуск (без Docker для PHP)
 
-После загрузки фикстур будет:
+Если вы предпочитаете запускать PHP локально, следуйте этим шагам.
 
-admin@test.com
- / admin12345 (ROLE_ADMIN)
+1. **Установка зависимостей**
+   ```bash
+   composer install
+   ```
 
-user@test.com
- / user12345 (ROLE_USER)
+2. **Настройка окружения**
+   ```bash
+   cp .env .env.local
+   ```
 
-Inventories:
+3. **Запуск базы данных**
+   ```bash
+   docker compose up -d database
+   ```
 
-Admin Private Inventory (owner=admin, public=false)
+4. **Инициализация БД**
+   ```bash
+   php bin/console doctrine:migrations:migrate --no-interaction
+   php bin/console doctrine:fixtures:load --no-interaction
+   ```
 
-Admin Public Inventory (owner=admin, public=true)
+5. **Запуск сервера**
+   ```bash
+   php -S 127.0.0.1:8000 -t public
+   ```
+   Приложение будет доступно по адресу `http://127.0.0.1:8000`.
 
-User Private Inventory (owner=user, public=false)
+---
 
-ACL:
+## 🧪 Тестирование
 
-user получает WRITE на Admin Private Inventory (проверка edit/manage-fields/delete)
+Проект содержит модульные, интеграционные и функциональные тесты.
 
-Custom fields:
-
-на Admin Private Inventory: TEXT(required), DATE(optional)
-
-на User Private Inventory: NUMBER(required), BOOLEAN(optional)
-
-3) Как загрузить фикстуры в DEV
-
-В dev (обычная база):
-php bin/console doctrine:migrations:migrate --no-interaction
-php bin/console doctrine:fixtures:load --no-interaction
-php bin/console cache:clear
-
-Проверка SQL:
-php bin/console doctrine:query:sql "SELECT id, email, roles FROM users ORDER BY id;"
-php bin/console doctrine:query:sql "SELECT id, name, is_public, owner_id FROM inventories ORDER BY id;"
-php bin/console doctrine:query:sql "SELECT inventory_id, user_id, permission FROM inventory_access ORDER BY id;"
-php bin/console doctrine:query:sql "SELECT id, inventory_id, type, position, is_required FROM custom_fields ORDER BY inventory_id, position;"
-
-4) Как загрузить фикстуры в TEST (для PHPUnit)
-
-Важно: тесты лучше гонять в отдельной БД (APP_ENV=test).
-Обычно workflow такой:
-
+### Подготовка тестовой базы данных
+Перед первым запуском тестов необходимо подготовить тестовую БД:
+```bash
 php bin/console doctrine:database:drop --env=test --force --if-exists
 php bin/console doctrine:database:create --env=test
 php bin/console doctrine:migrations:migrate --env=test --no-interaction
 php bin/console doctrine:fixtures:load --env=test --no-interaction
+```
+
+### Запуск всех тестов (локально)
+```bash
 php bin/phpunit
+```
 
-Важный момент с миграциями и sequences (inventories_id_seq уже есть)
+### Запуск всех тестов через Docker
+```bash
+docker compose exec app php bin/phpunit
+```
 
-Фикстуры будут работать только если схема/миграции синхронизированы.
-Если у тебя сейчас “diff” пытается создать то, что уже существует, значит БД уже частично вручную/старыми миграциями создана.
+---
 
-Самый чистый способ привести dev-базу в порядок:
-php bin/console doctrine:database:drop --force --if-exists
-php bin/console doctrine:database:create
-php bin/console doctrine:migrations:migrate --no-interaction
-php bin/console doctrine:fixtures:load --no-interaction
+## 🔑 Тестовые аккаунты (из фикстур)
+
+После загрузки фикстур доступны следующие пользователи:
+
+| Email | Пароль | Роль | Описание |
+| :--- | :--- | :--- | :--- |
+| `admin@test.com` | `admin12345` | `ROLE_ADMIN` | Полный доступ |
+| `user@test.com` | `user12345` | `ROLE_USER` | Доступ к своим и публичным инвентарям |
+| `noaccess@test.com` | `noaccess12345` | `ROLE_USER` | Видит только публичные инвентари |
+
+---
+
+## 📦 Структура данных (фикстуры)
+
+- **Инвентари**:
+    - `Admin Private Inventory` (владелец: admin, приватный)
+    - `Admin Public Inventory` (владелец: admin, публичный)
+    - `User Private Inventory` (владелец: user, приватный)
+- **ACL**:
+    - Пользователь `user@test.com` имеет права `WRITE` на `Admin Private Inventory`.
+- **Кастомные поля**:
+    - Привязаны к различным инвентарям для проверки динамических форм.
 

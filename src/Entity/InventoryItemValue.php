@@ -8,15 +8,8 @@ use App\Repository\InventoryItemValueRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: InventoryItemValueRepository::class)]
-#[ORM\Table(
-    name: 'inventory_item_values',
-    uniqueConstraints: [
-        new ORM\UniqueConstraint(
-            name: 'uniq_item_field',
-            columns: ['item_id', 'field_id']
-        )
-    ]
-)]
+#[ORM\Table(name: 'inventory_item_values')]
+#[ORM\UniqueConstraint(name: 'uniq_item_field', columns: ['item_id', 'field_id'])]
 class InventoryItemValue
 {
     #[ORM\Id]

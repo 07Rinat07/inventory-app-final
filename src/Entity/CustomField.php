@@ -9,33 +9,9 @@ use App\Repository\CustomFieldRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CustomFieldRepository::class)]
-#[ORM\Table(
-    name: 'custom_fields',
-    uniqueConstraints: [
-        /**
-         * ВАЖНО:
-         * Имя unique должно совпадать с тем, что реально есть/ожидается в БД.
-         * Судя по твоему dump-sql, в БД индекс/constraint называется:
-         *   uniq_custom_fields_position
-         * поэтому фиксируем именно это имя, иначе doctrine:schema:validate будет ругаться
-         * и migrations:diff будет пытаться "дропать/создавать" заново.
-         */
-        new ORM\UniqueConstraint(
-            name: 'uniq_custom_fields_position',
-            columns: ['inventory_id', 'position']
-        ),
-    ],
-    indexes: [
-        /**
-         * Индекс на FK inventory_id почти всегда есть (и полезен по производительности).
-         * Опять же: фиксируем имя, чтобы Doctrine не пытался переименовывать в IDX_********.
-         */
-        new ORM\Index(
-            name: 'idx_custom_fields_inventory',
-            columns: ['inventory_id']
-        ),
-    ]
-)]
+#[ORM\Table(name: 'custom_fields')]
+#[ORM\UniqueConstraint(name: 'uniq_custom_fields_position', columns: ['inventory_id', 'position'])]
+#[ORM\Index(name: 'idx_custom_fields_inventory', columns: ['inventory_id'])]
 class CustomField
 {
     #[ORM\Id]

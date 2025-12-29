@@ -1,6 +1,21 @@
 
 services:
-###> doctrine/doctrine-bundle ###
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./var:/var/www/html/var
+    environment:
+      DATABASE_URL: "postgresql://app:!ChangeMe!@database:5432/app?serverVersion=16&charset=utf8"
+      APP_ENV: dev
+      APP_SECRET: 1bdd3f8e630e08dbb62b4e1a3e77a414
+    depends_on:
+      - database
+
   database:
     image: postgres:${POSTGRES_VERSION:-16}-alpine
     environment:

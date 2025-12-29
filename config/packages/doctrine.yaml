@@ -1,61 +1,22 @@
 doctrine:
   dbal:
-    # Используем DATABASE_URL из .env / .env.local / .env.test.local
+    driver: 'pdo_pgsql'
+    server_version: '16'          # PostgreSQL
+    charset: utf8
     url: '%env(resolve:DATABASE_URL)%'
 
-    # ЯВНО фиксируем PostgreSQL
-    driver: pdo_pgsql
-
-    # Версия PostgreSQL (у вас 16.11)
-    server_version: '16'
-
-    profiling_collect_backtrace: '%kernel.debug%'
-    use_savepoints: true
-
   orm:
-    auto_generate_proxy_classes: true
-    enable_lazy_ghost_objects: true
-    report_fields_where_declared: true
-    validate_xml_mapping: true
+    # настройка identity_generation_preferences должна быть под ORM
+    identity_generation_preferences:
+      Doctrine\DBAL\Platforms\PostgreSQLPlatform: identity
 
+    auto_generate_proxy_classes: true
     naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
     auto_mapping: true
-
     mappings:
       App:
-        type: attribute
         is_bundle: false
+        type: attribute
         dir: '%kernel.project_dir%/src/Entity'
         prefix: 'App\Entity'
         alias: App
-
-
-when@test:
-  doctrine:
-    dbal:
-      # Symfony сам добавит _test
-      # inventory_app → inventory_app_test
-      dbname_suffix: '_test%env(default::TEST_TOKEN)%'
-
-
-when@prod:
-  doctrine:
-    orm:
-      auto_generate_proxy_classes: false
-      proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'
-
-      query_cache_driver:
-        type: pool
-        pool: doctrine.system_cache_pool
-
-      result_cache_driver:
-        type: pool
-        pool: doctrine.result_cache_pool
-
-  framework:
-    cache:
-      pools:
-        doctrine.result_cache_pool:
-          adapter: cache.app
-        doctrine.system_cache_pool:
-          adapter: cache.system

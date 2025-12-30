@@ -1,4 +1,4 @@
-FROM php:8.1-fpm-alpine
+FROM php:8.2-fpm-alpine
 
 # Установка системных зависимостей
 RUN apk add --no-cache \
@@ -8,7 +8,8 @@ RUN apk add --no-cache \
     libzip-dev \
     icu-dev \
     nginx \
-    supervisor
+    supervisor \
+    postgresql-client
 
 # Установка PHP расширений
 RUN docker-php-ext-install \
@@ -16,6 +17,11 @@ RUN docker-php-ext-install \
     zip \
     intl \
     opcache
+
+RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
+    && pecl install apcu \
+    && docker-php-ext-enable apcu \
+    && apk del .build-deps
 
 # Установка Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

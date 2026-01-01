@@ -17,7 +17,6 @@ services:
     depends_on:
       database:
         condition: service_healthy
-    command: sleep infinity
 
   database:
     image: postgres:16-alpine
@@ -32,7 +31,7 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - database_data:/var/lib/postgresql/data:rw
+      - database_data:/var/lib/postgresql/data
 
 volumes:
   database_data:

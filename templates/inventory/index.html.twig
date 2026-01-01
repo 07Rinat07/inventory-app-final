@@ -34,17 +34,23 @@
 
                   {% if is_granted('INVENTORY_VIEW', inventory) %}
                     <a href="{{ path('inventory_show', {id: inventory.id}) }}"
-                       class="btn btn-sm btn-outline-secondary">View</a>
+                       class="btn btn-sm btn-outline-secondary">
+                      View
+                    </a>
                   {% endif %}
 
                   {% if is_granted('INVENTORY_EDIT', inventory) %}
                     <a href="{{ path('inventory_edit', {id: inventory.id}) }}"
-                       class="btn btn-sm btn-outline-primary">Edit</a>
+                       class="btn btn-sm btn-outline-primary">
+                      Edit
+                    </a>
                   {% endif %}
 
                   {% if is_granted('INVENTORY_EDIT', inventory) %}
                     <a href="{{ path('inventory_id_format_edit', {id: inventory.id}) }}"
-                       class="btn btn-sm btn-outline-secondary">ID format</a>
+                       class="btn btn-sm btn-outline-secondary">
+                      ID format
+                    </a>
                   {% endif %}
 
                   {% if is_granted('INVENTORY_DELETE', inventory) %}
@@ -52,10 +58,14 @@
                           action="{{ path('inventory_delete', {id: inventory.id}) }}"
                           class="d-inline"
                           onsubmit="return confirm('Delete inventory &quot;{{ inventory.name|e('js') }}&quot;? This cannot be undone.');">
-                      {# ВАЖНО: имя поля должно совпадать с контроллером: _csrf_token #}
-                      <input type="hidden" name="_csrf_token"
+                      {# CSRF token — имя поля СТРОГО _token #}
+                      <input type="hidden"
+                             name="_token"
                              value="{{ csrf_token('inventory_delete_' ~ inventory.id) }}">
-                      <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                      <button type="submit"
+                              class="btn btn-sm btn-outline-danger">
+                        Delete
+                      </button>
                     </form>
                   {% endif %}
 
@@ -64,7 +74,9 @@
             </tr>
           {% else %}
             <tr>
-              <td colspan="4" class="text-muted">No inventories yet.</td>
+              <td colspan="4" class="text-muted text-center">
+                No inventories yet.
+              </td>
             </tr>
           {% endfor %}
           </tbody>

@@ -14,21 +14,7 @@ services:
       APP_DEBUG: 1
       APP_SECRET: 1bdd3f8e630e08dbb62b4e1a3e77a414
       DATABASE_URL: "postgresql://app:!ChangeMe!@database:5432/app?serverVersion=16&charset=utf8"
-      POSTGRES_PASSWORD: "!ChangeMe!"
-    depends_on:
-      database:
-        condition: service_healthy
-
-  app_test:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: inventory_app_test
-    environment:
-      APP_ENV: test
-      APP_DEBUG: 1
-      APP_SECRET: 1bdd3f8e630e08dbb62b4e1a3e77a414
-      DATABASE_URL: "postgresql://app:!ChangeMe!@database:5432/app_test?serverVersion=16&charset=utf8"
+      DATABASE_TEST_URL: "postgresql://app:!ChangeMe!@database:5432/app_test?serverVersion=16&charset=utf8"
       POSTGRES_PASSWORD: "!ChangeMe!"
     depends_on:
       database:

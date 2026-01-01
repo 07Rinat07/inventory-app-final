@@ -1,6 +1,7 @@
 # see https://symfony.com/doc/current/reference/configuration/framework.html
 framework:
   secret: '%env(APP_SECRET)%'
+  csrf_protection: true
   annotations: false
   http_method_override: false
   handle_all_throwables: true
@@ -9,6 +10,7 @@ framework:
   # Remove or comment this section to explicitly disable session support.
   session:
     handler_id: null
+    save_path: '%kernel.project_dir%/var/sessions/%kernel.environment%'
     cookie_secure: auto
     cookie_samesite: lax
 

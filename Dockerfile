@@ -39,7 +39,8 @@ WORKDIR /var/www/html
 COPY . .
 
 # Установка зависимостей (без скриптов, так как БД может быть еще не готова)
-RUN composer install --no-scripts --no-interaction
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+
 
 # Права доступа
 RUN mkdir -p var && chown -R www-data:www-data /var/www/html/var

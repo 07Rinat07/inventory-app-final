@@ -26,8 +26,7 @@ class InventoryIdFormatPart
     private int $position = 0;
 
     /**
-     * ВАЖНО:
-     * enumType хранит значение enum в БД (string/int в зависимости от enum).
+     * enumType хранит значение enum в БД.
      */
     #[ORM\Column(enumType: InventoryIdPartType::class)]
     private InventoryIdPartType $type;

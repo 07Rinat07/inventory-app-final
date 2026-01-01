@@ -20,12 +20,14 @@ final class InventoryIdFormatPartRepository extends ServiceEntityRepository
     }
 
     /**
-     * Возвращает части формата ID в правильном порядке
+     * Возвращает части формата ID в правильном порядке.
      *
      * Используется:
-     * - FORMAT_UI
-     * - CustomIdGenerator
-     * - API Provider
+     * - UI формата
+     * - генерация ID
+     * - возможный API
+     *
+     * @return InventoryIdFormatPart[]
      */
     public function findOrderedByInventory(Inventory $inventory): array
     {
@@ -33,18 +35,20 @@ final class InventoryIdFormatPartRepository extends ServiceEntityRepository
             ->andWhere('p.inventory = :inventory')
             ->setParameter('inventory', $inventory)
             ->orderBy('p.position', 'ASC')
+            ->addOrderBy('p.id', 'ASC') // детерминизм, если позиции совпали в истории
             ->getQuery()
             ->getResult();
     }
 
     /**
-     * Удаляет все части формата для инвентаря
-     *
-     * Используется при reorder / save
+     * Удаляет все части формата для инвентаря одним SQL DELETE.
+     * Используется перед сохранением новых частей формата.
+     * - query->execute() выполняет DELETE сразу в БД
+     * - это решает конфликт UNIQUE при “replace” (inventory_id, position)
      */
-    public function deleteByInventory(Inventory $inventory): void
+    public function deleteByInventory(Inventory $inventory): int
     {
-        $this->createQueryBuilder('p')
+        return $this->createQueryBuilder('p')
             ->delete()
             ->andWhere('p.inventory = :inventory')
             ->setParameter('inventory', $inventory)

@@ -11,6 +11,22 @@ use App\Repository\InventoryAccessRepository;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
+/**
+ * InventoryVoter
+ *
+ * Правила доступа:
+ * - ADMIN  : полный доступ ко всем инвентарям
+ * - OWNER  : полный доступ к своим инвентарям
+ * - PUBLIC : доступ только на VIEW
+ * - ACL    :
+ *     - VIEW  : разрешён
+ *     - EDIT  : разрешён при WRITE
+ *     - DELETE: ЗАПРЕЩЁН
+ *     - MANAGE_FIELDS: ЗАПРЕЩЁН
+ *
+ * DELETE и MANAGE_FIELDS — деструктивные операции,
+ * разрешены ТОЛЬКО владельцу или администратору.
+ */
 final class InventoryVoter extends Voter
 {
     public const VIEW = 'INVENTORY_VIEW';
@@ -33,8 +49,11 @@ final class InventoryVoter extends Voter
             ], true);
     }
 
-    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
-    {
+    protected function voteOnAttribute(
+        string $attribute,
+        mixed $subject,
+        TokenInterface $token
+    ): bool {
         $user = $token->getUser();
         if (!$user instanceof User) {
             return false;
@@ -43,22 +62,22 @@ final class InventoryVoter extends Voter
         /** @var Inventory $inventory */
         $inventory = $subject;
 
-        // Админ — полный доступ
+        // 1. Администратор — полный доступ
         if (\in_array('ROLE_ADMIN', $user->getRoles(), true)) {
             return true;
         }
 
-        // Owner — полный доступ
+        // 2. Владелец — полный доступ
         if ($inventory->getOwner()->getId() === $user->getId()) {
             return true;
         }
 
-        // Public — только VIEW
+        // 3. Публичный инвентарь — только VIEW
         if ($attribute === self::VIEW && $inventory->isPublic()) {
             return true;
         }
 
-        // ACL
+        // 4. ACL (InventoryAccess)
         $access = $this->accessRepository->findOneBy([
             'inventory' => $inventory,
             'user' => $user,
@@ -68,11 +87,17 @@ final class InventoryVoter extends Voter
             return false;
         }
 
+        // 5. Ограниченные права по ACL
         return match ($attribute) {
             self::VIEW => true,
-            self::EDIT,
+
+            self::EDIT =>
+                $access->getPermission() === InventoryAccess::PERMISSION_WRITE,
+
+            // DELETE и MANAGE_FIELDS запрещены через ACL
             self::DELETE,
-            self::MANAGE_FIELDS => $access->getPermission() === InventoryAccess::PERMISSION_WRITE,
+            self::MANAGE_FIELDS => false,
+
             default => false,
         };
     }

@@ -49,13 +49,21 @@ Email: [ura07srr@gmail.com](mailto:ura07srr@gmail.com)
 
 ---
 
-## 🚀 Требования
+## 🚀 Требования (Ubuntu 24.04)
 
-Для запуска проекта вам понадобятся:
-- **PHP 8.2** или выше
+Для запуска проекта локально в Ubuntu 24.04 вам понадобятся:
+- **PHP 8.2** или выше + расширения (`php-ctype`, `php-iconv`, `php-xml`, `php-pgsql`, `php-mbstring`, `php-intl`)
 - **Composer**
-- **Docker** и **Docker Compose**
-- **Make** (опционально)
+- **PostgreSQL 16**
+
+### Установка зависимостей в Ubuntu 24.04:
+```bash
+sudo apt update
+sudo apt install -y php8.2 php8.2-cli php8.2-common php8.2-pgsql php8.2-xml php8.2-mbstring php8.2-curl php8.2-intl php8.2-zip
+sudo apt install -y postgresql-16
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+```
 
 ---
 
@@ -86,7 +94,11 @@ Email: [ura07srr@gmail.com](mailto:ura07srr@gmail.com)
 Все тесты проходят успешно:
 
 ```bash
+# Если через Docker
 docker compose exec app vendor/bin/phpunit
+
+# Если локально
+vendor/bin/phpunit
 ```
 ---
 ## 🛠 Установка и запуск
@@ -121,39 +133,71 @@ docker compose exec app vendor/bin/phpunit
 docker compose exec app php bin/console ...
 ```
 
-### Способ 2: Локальный запуск (без Docker для PHP)
+### Способ 2: Локальный запуск (Ubuntu 24.04 без Docker)
+
 ⚙️ Переменные окружения
 
-* Основные параметры настраиваются через
-* .env / .env.local:
-- `DATABASE_URL` — строка подключения к PostgreSQL
-- `APP_ENV` — окружение (`dev`, `test`, `prod`)
-- `APP_SECRET` — секрет приложения
+Основные параметры настраиваются через `.env.local` и `.env.test.local`.
 
 ---
 #### Шаги запуска
+
 1. Клонирование репозитория
 ```bash
 git clone git@github.com:07Rinat07/inventory-app-final.git
 cd inventory-app-final
 ```
+
 2. Установка зависимостей
 ```bash
 composer install
 ```
-3. Настройка базы данных
-* Создайте базу данных PostgreSQL и обновите DATABASE_URL в .env.local
-* DATABASE_URL="pgsql://inventory_user:inventory_pass@127.0.0.1:5432/inventory_app?serverVersion=16"
-4. Выполнение миграций
+
+3. Настройка PostgreSQL в Ubuntu
+
+Если база данных и пользователь еще не созданы:
 ```bash
+sudo -u postgres psql -c "CREATE USER inventory_user WITH PASSWORD 'inventory_pass';"
+sudo -u postgres psql -c "ALTER USER inventory_user CREATEDB;"
+```
+
+4. Настройка подключения
+
+Создайте файлы `.env.local` и `.env.test.local` с актуальным `DATABASE_URL`:
+```ini
+DATABASE_URL="pgsql://inventory_user:inventory_pass@127.0.0.1:5432/inventory_app?serverVersion=16"
+```
+
+5. Инициализация базы данных (миграции и фикстуры)
+
+```bash
+# Для основного окружения (dev)
+php bin/console doctrine:database:create --if-not-exists
 php bin/console doctrine:migrations:migrate --no-interaction
 php bin/console doctrine:fixtures:load --no-interaction
+
+# Для тестового окружения (test)
+php bin/console doctrine:database:create --env=test --if-not-exists
+php bin/console doctrine:migrations:migrate --env=test --no-interaction
+php bin/console doctrine:fixtures:load --env=test --no-interaction
 ```
-5. Запуск сервера
+
+6. Запуск сервера
 ```bash
+# С использованием Symfony CLI
 symfony server:start
+
+# ИЛИ через встроенный сервер PHP
+php -S localhost:8000 -t public
 ```
-6. Доступ к приложению
+
+7. Запуск тестов
+```bash
+# Запуск всех тестов
+php bin/phpunit
+```
+
+8. Доступ к приложению
 * Приложение будет доступно по адресу: http://localhost:8000
 
 🔑 Тестовые аккаунты (фикстуры)

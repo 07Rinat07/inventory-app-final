@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Inventory;
-use App\Entity\InventoryAccess;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<Inventory>
+ */
 final class InventoryRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -18,24 +20,32 @@ final class InventoryRepository extends ServiceEntityRepository
     }
 
     /**
-     * Инвентари, доступные пользователю:
-     *  - свои (owner)
-     *  - публичные
-     *  - по ACL (есть запись InventoryAccess для пользователя)
+     * Возвращает инвентари, доступные пользователю.
+     *
+     * Логика:
+     * - ROLE_ADMIN:
+     *     • видит ВСЕ инвентари (public + private, любые владельцы)
+     * - ROLE_USER:
+     *     • свои инвентари (public + private)
+     *     • чужие ТОЛЬКО public
+     *
+     * Чужие private для ROLE_USER не возвращаются вообще.
      *
      * @return Inventory[]
      */
     public function findAvailableForUser(User $user): array
     {
+        // Администратор видит всё
+        if (\in_array('ROLE_ADMIN', $user->getRoles(), true)) {
+            return $this->createQueryBuilder('i')
+                ->orderBy('i.id', 'DESC')
+                ->getQuery()
+                ->getResult();
+        }
+
+        // Обычный пользователь: свои + public
         return $this->createQueryBuilder('i')
-            ->select('DISTINCT i') // защита от дублей при join
-            ->leftJoin(
-                InventoryAccess::class,
-                'a',
-                'WITH',
-                'a.inventory = i AND a.user = :user'
-            )
-            ->andWhere('i.owner = :user OR i.isPublic = true OR a.id IS NOT NULL')
+            ->andWhere('i.owner = :user OR i.isPublic = true')
             ->setParameter('user', $user)
             ->orderBy('i.id', 'DESC')
             ->getQuery()
@@ -43,28 +53,26 @@ final class InventoryRepository extends ServiceEntityRepository
     }
 
     /**
-     * Сохранение сущности (унифицированный метод, чтобы сервисы не трогали EntityManager напрямую).
+     * Сохранение инвентаря
      */
-    public function save(Inventory $inventory, bool $flush = true): void
+    public function save(Inventory $inventory, bool $flush = false): void
     {
-        $em = $this->getEntityManager();
-        $em->persist($inventory);
+        $this->getEntityManager()->persist($inventory);
 
         if ($flush) {
-            $em->flush();
+            $this->getEntityManager()->flush();
         }
     }
 
     /**
-     * Удаление сущности.
+     * Удаление инвентаря
      */
-    public function remove(Inventory $inventory, bool $flush = true): void
+    public function remove(Inventory $inventory, bool $flush = false): void
     {
-        $em = $this->getEntityManager();
-        $em->remove($inventory);
+        $this->getEntityManager()->remove($inventory);
 
         if ($flush) {
-            $em->flush();
+            $this->getEntityManager()->flush();
         }
     }
 }

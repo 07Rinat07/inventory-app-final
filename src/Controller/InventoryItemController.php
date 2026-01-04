@@ -38,8 +38,8 @@ final class InventoryItemController extends AbstractController
             throw $this->createNotFoundException('Item does not belong to this inventory.');
         }
 
-        // 3) Дальше твоя логика edit (GET форма / POST сохранение)
+        // 3) Дальше логика edit (GET форма / POST сохранение)
         // ...
-        return new Response('TODO edit'); // заглушка, если еще не реализовал
+        return new Response('TODO edit'); // заглушка, если еще не реализована
     }
 }

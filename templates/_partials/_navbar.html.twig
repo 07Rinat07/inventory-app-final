@@ -37,7 +37,7 @@
           {# Logout: делаем POST-формой (правильнее и безопаснее) #}
           <li class="nav-item">
             <form action="{{ path('app_logout') }}" method="post" class="d-inline">
-              {# Если у тебя в security logout включён csrf_token_id: logout (у тебя так и есть) #}
+              {# Если в security logout включён csrf_token_id: logout (у тебя так и есть) #}
               <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
               <button class="btn btn-outline-light btn-sm" type="submit">Logout</button>
             </form>

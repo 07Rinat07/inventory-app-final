@@ -110,11 +110,9 @@ final class InventoryItemIdGenerator
      * Получаем следующее значение sequence для inventory.
      *
      * ВАЖНО:
-     * - у тебя в миграциях видно таблицу/sequence под inventory_sequence,
+     * -  в миграциях видно таблицу/sequence под inventory_sequence,
      *   и UNIQUE по inventory_id (в миграциях было "uniq_inventory_sequence").
      * - поэтому делаем UPSERT (PostgreSQL) и возвращаем current_value.
-     *
-     * Если таблица вдруг называется иначе — скажешь, подправим SQL одной строкой.
      */
     private function nextSequence(Inventory $inventory): int
     {

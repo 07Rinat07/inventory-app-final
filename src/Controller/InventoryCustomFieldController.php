@@ -18,7 +18,7 @@ final class InventoryCustomFieldController extends AbstractController
 {
     /**
      * Ограничение из требований менторов: до 3 кастомных полей каждого типа.
-     * (Если поменяется требование — меняешь только эту константу.)
+     * (Если поменяется требование — менять только эту константу.)
      */
     private const LIMIT_PER_TYPE = 3;
 
@@ -83,7 +83,7 @@ final class InventoryCustomFieldController extends AbstractController
             // 3) Позиция = max(position)+1, чтобы порядок всегда был корректный
             $position = $repository->getNextPosition($inventory);
 
-            // 4) Создаём сущность сразу в валидном состоянии (как у тебя задумано в Entity)
+            // 4) Создаём сущность сразу в валидном состоянии (как задумано в Entity)
             $field = new CustomField($inventory, $type, $position);
             $field->setIsRequired($isRequired);
 

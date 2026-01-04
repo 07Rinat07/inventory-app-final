@@ -77,7 +77,7 @@ final class AppFixtures extends Fixture
          * - admin public (публичный)
          * - user private (не публичный)
          *
-         * Так ты сможешь проверить:
+         *   проверить:
          * - "свои" инвентари
          * - доступ к public
          * - доступ по ACL

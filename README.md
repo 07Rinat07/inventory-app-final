@@ -140,7 +140,7 @@ docker compose exec app vendor/bin/phpunit
 * Все тесты (Unit, Integration, Functional) будут прогнаны внутри контейнера. Тестовая среда (`APP_ENV=test`) и тестовая база данных настраиваются автоматически.
 
 #### 4. Доступ к приложению
-* Приложение будет доступно по адресу: http://localhost:8080
+* Приложение будет доступно по адресу: http://localhost:8080/login
 * Данные сессий сохраняются в директории `var/sessions` внутри проекта.
 * Для выполнения команд Symfony консоли используйте:
 ```bash
@@ -217,7 +217,7 @@ php bin/console doctrine:fixtures:load --env=test --no-interaction
 7. Запуск сервера
 ```bash
 # Использование встроенного сервера PHP
-php -S localhost:8000 -t public
+php -S localhost:8000/login -t public
 ```
 
 8. Запуск тестов
@@ -227,7 +227,7 @@ php bin/phpunit
 ```
 
 9. Проверка работоспособности
-- Откройте [http://localhost:8000](http://localhost:8000)
+- Откройте [http://localhost:8000/login](http://localhost:8000/login)
 - Войдите, используя `admin@test.com` / `admin12345`
 - Если тесты `php bin/phpunit` прошли успешно (OK), значит база данных и окружение настроены верно.
 

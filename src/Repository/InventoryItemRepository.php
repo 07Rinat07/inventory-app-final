@@ -7,37 +7,17 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
+ * Репозиторий для управления предметами инвентаря.
+ *
  * @extends ServiceEntityRepository<InventoryItem>
  */
 class InventoryItemRepository extends ServiceEntityRepository
 {
+    /**
+     * Создает новый экземпляр репозитория.
+     */
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, InventoryItem::class);
     }
-
-    //    /**
-    //     * @return InventoryItem[] Returns an array of InventoryItem objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('i')
-    //            ->andWhere('i.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('i.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
-
-    //    public function findOneBySomeField($value): ?InventoryItem
-    //    {
-    //        return $this->createQueryBuilder('i')
-    //            ->andWhere('i.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
 }

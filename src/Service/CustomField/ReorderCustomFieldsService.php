@@ -8,15 +8,23 @@ use App\Entity\CustomField;
 use App\Repository\CustomFieldRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
+/**
+ * Сервис для изменения порядка кастомных полей.
+ */
 final class ReorderCustomFieldsService
 {
+    /**
+     * Создает новый экземпляр сервиса.
+     */
     public function __construct(
         private EntityManagerInterface $em,
         private CustomFieldRepository $repository,
     ) {}
 
     /**
-     * @param int[] $orderedIds
+     * Обновляет позиции полей на основе переданного списка ID.
+     *
+     * @param int[] $orderedIds Массив идентификаторов полей в нужном порядке.
      */
     public function reorder(array $orderedIds): void
     {
@@ -25,7 +33,7 @@ final class ReorderCustomFieldsService
                 $field = $this->repository->find($fieldId);
 
                 if (!$field instanceof CustomField) {
-                    continue; // или throw — по желанию
+                    continue;
                 }
 
                 $field->setPosition($position);

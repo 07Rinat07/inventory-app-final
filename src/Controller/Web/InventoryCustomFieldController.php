@@ -12,8 +12,19 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
+/**
+ * Контроллер для управления порядком кастомных полей инвентаря.
+ */
 final class InventoryCustomFieldController extends AbstractController
 {
+    /**
+     * Обрабатывает AJAX запрос на изменение порядка полей.
+     *
+     * @param Inventory $inventory Объект инвентаря.
+     * @param Request $request Объект запроса с JSON-данными.
+     * @param ReorderCustomFieldsService $service Сервис для переупорядочивания полей.
+     * @return JsonResponse Результат операции в формате JSON.
+     */
     #[Route(
         '/inventory/{id}/custom-fields/reorder',
         name: 'inventory_custom_fields_reorder',

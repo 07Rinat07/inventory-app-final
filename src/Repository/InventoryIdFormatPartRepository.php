@@ -10,24 +10,25 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
+ * Репозиторий для работы с частями формата кастомного идентификатора.
+ *
  * @extends ServiceEntityRepository<InventoryIdFormatPart>
  */
 final class InventoryIdFormatPartRepository extends ServiceEntityRepository
 {
+    /**
+     * Создает новый экземпляр репозитория.
+     */
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, InventoryIdFormatPart::class);
     }
 
     /**
-     * Возвращает части формата ID в правильном порядке.
+     * Возвращает части формата идентификатора в правильном порядке.
      *
-     * Используется:
-     * - UI формата
-     * - генерация ID
-     * - возможный API
-     *
-     * @return InventoryIdFormatPart[]
+     * @param Inventory $inventory Инвентарь.
+     * @return InventoryIdFormatPart[] Список частей формата.
      */
     public function findOrderedByInventory(Inventory $inventory): array
     {
@@ -35,16 +36,17 @@ final class InventoryIdFormatPartRepository extends ServiceEntityRepository
             ->andWhere('p.inventory = :inventory')
             ->setParameter('inventory', $inventory)
             ->orderBy('p.position', 'ASC')
-            ->addOrderBy('p.id', 'ASC') // детерминизм, если позиции совпали в истории
+            ->addOrderBy('p.id', 'ASC') // детерминизм, если позиции совпали
             ->getQuery()
             ->getResult();
     }
 
     /**
-     * Удаляет все части формата для инвентаря одним SQL DELETE.
-     * Используется перед сохранением новых частей формата.
-     * - query->execute() выполняет DELETE сразу в БД
-     * - это решает конфликт UNIQUE при “replace” (inventory_id, position)
+     * Удаляет все части формата для инвентаря.
+     * Используется перед сохранением новых частей формата для избежания конфликтов UNIQUE.
+     *
+     * @param Inventory $inventory Инвентарь.
+     * @return int Количество удаленных записей.
      */
     public function deleteByInventory(Inventory $inventory): int
     {

@@ -9,6 +9,9 @@ use App\Entity\InventorySequence;
 use App\Repository\InventorySequenceRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
+/**
+ * Генератор простых числовых ID для предметов (просто по порядку).
+ */
 final class InventoryItemIdGenerator
 {
     public function __construct(
@@ -17,32 +20,25 @@ final class InventoryItemIdGenerator
     ) {}
 
     /**
-     * Генерирует следующий ID для элемента инвентаря.
-     *
-     * ВАЖНО:
-     * - метод атомарный
-     * - безопасен при конкурентном доступе
-     * - единственная точка генерации ID
+     * Выдает следующий номер для предмета в конкретном инвентаре.
+     * Тут используется блокировка FOR UPDATE, чтобы при большой нагрузке номера не двоились.
      */
     public function generate(Inventory $inventory): int
     {
         return $this->em->wrapInTransaction(function () use ($inventory): int {
-            // 1. Берём sequence с блокировкой строки
-            $sequence = $this->sequenceRepository
-                ->findOneByInventoryForUpdate($inventory);
+            // Ищем текущий счетчик с блокировкой
+            $sequence = $this->sequenceRepository->findForUpdate($inventory);
 
-            // 2. Если sequence ещё не существует — создаём
+            // Если его еще нет — создаем новый
             if ($sequence === null) {
-                $sequence = new InventorySequence($inventory);
+                $sequence = new InventorySequence();
+                $sequence->setInventory($inventory);
                 $this->em->persist($sequence);
-                $this->em->flush();
             }
 
-            // 3. Получаем следующий номер
-            $value = $sequence->next();
-
-            // 4. Сохраняем новое состояние счётчика
-            $this->em->flush();
+            // Берем номер и сразу плюсуем на будущее
+            $value = $sequence->getNextValue();
+            $sequence->increment();
 
             return $value;
         });

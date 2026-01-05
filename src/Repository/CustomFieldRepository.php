@@ -10,19 +10,27 @@ use App\Entity\Inventory;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * Репозиторий для управления кастомными полями инвентаря.
+ */
 final class CustomFieldRepository extends ServiceEntityRepository
 {
+    /** Максимальное количество полей одного типа в рамках одного инвентаря. */
     public const TYPE_LIMIT_PER_INVENTORY = 3;
 
+    /**
+     * Создает новый экземпляр репозитория.
+     */
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, CustomField::class);
     }
 
     /**
-     * Поля инвентаря в правильном порядке.
+     * Возвращает поля инвентаря в правильном порядке.
      *
-     * @return CustomField[]
+     * @param Inventory $inventory Инвентарь.
+     * @return CustomField[] Список полей.
      */
     public function findByInventoryOrdered(Inventory $inventory): array
     {
@@ -36,7 +44,10 @@ final class CustomFieldRepository extends ServiceEntityRepository
     }
 
     /**
-     * Сколько полей всего у инвентаря.
+     * Подсчитывает общее количество полей у инвентаря.
+     *
+     * @param Inventory $inventory Инвентарь.
+     * @return int Количество полей.
      */
     public function countByInventory(Inventory $inventory): int
     {
@@ -49,8 +60,12 @@ final class CustomFieldRepository extends ServiceEntityRepository
     }
 
     /**
-     * Сколько полей конкретного типа уже есть у inventory.
-     * Полезно под лимиты “до 3 полей каждого типа”.
+     * Подсчитывает количество полей конкретного типа у инвентаря.
+     * Полезно для проверки лимита (до 3 полей каждого типа).
+     *
+     * @param Inventory $inventory Инвентарь.
+     * @param CustomFieldType $type Тип поля.
+     * @return int Количество полей данного типа.
      */
     public function countByInventoryAndType(Inventory $inventory, CustomFieldType $type): int
     {
@@ -65,7 +80,11 @@ final class CustomFieldRepository extends ServiceEntityRepository
     }
 
     /**
-     * Проверка лимита: “не больше 3 полей каждого типа на inventory”.
+     * Проверяет, достигнут ли лимит полей конкретного типа (не больше 3).
+     *
+     * @param Inventory $inventory Инвентарь.
+     * @param CustomFieldType $type Тип поля.
+     * @return bool True, если лимит достигнут.
      */
     public function hasReachedTypeLimit(Inventory $inventory, CustomFieldType $type): bool
     {
@@ -73,7 +92,10 @@ final class CustomFieldRepository extends ServiceEntityRepository
     }
 
     /**
-     * Следующая позиция: max(position) + 1.
+     * Возвращает следующую позицию для нового поля (max + 1).
+     *
+     * @param Inventory $inventory Инвентарь.
+     * @return int Следующая свободная позиция.
      */
     public function getNextPosition(Inventory $inventory): int
     {
@@ -87,6 +109,12 @@ final class CustomFieldRepository extends ServiceEntityRepository
         return ((int) $max) + 1;
     }
 
+    /**
+     * Сохраняет поле в базе данных.
+     *
+     * @param CustomField $field Объект поля.
+     * @param bool $flush Нужно ли сразу выполнить flush.
+     */
     public function save(CustomField $field, bool $flush = true): void
     {
         $em = $this->getEntityManager();
@@ -97,6 +125,12 @@ final class CustomFieldRepository extends ServiceEntityRepository
         }
     }
 
+    /**
+     * Удаляет поле из базы данных.
+     *
+     * @param CustomField $field Объект поля.
+     * @param bool $flush Нужно ли сразу выполнить flush.
+     */
     public function remove(CustomField $field, bool $flush = true): void
     {
         $em = $this->getEntityManager();
@@ -108,9 +142,11 @@ final class CustomFieldRepository extends ServiceEntityRepository
     }
 
     /**
-     * Bulk delete (на будущее под toolbar actions).
+     * Массовое удаление полей по списку ID.
      *
-     * @param int[] $ids
+     * @param Inventory $inventory Инвентарь.
+     * @param int[] $ids Список идентификаторов полей.
+     * @return int Количество удаленных записей.
      */
     public function deleteByIds(Inventory $inventory, array $ids): int
     {

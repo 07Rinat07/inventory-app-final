@@ -13,9 +13,15 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
+/**
+ * Контроллер для управления кастомными полями через веб-интерфейс.
+ */
 #[Route('/inventory/{id}/fields')]
 final class CustomFieldController extends AbstractController
 {
+    /**
+     * Отображает список кастомных полей.
+     */
     #[Route('', name: 'custom_field_index', methods: ['GET'])]
     public function index(
         Inventory $inventory,
@@ -29,6 +35,9 @@ final class CustomFieldController extends AbstractController
         ]);
     }
 
+    /**
+     * Создает новое кастомное поле.
+     */
     #[Route('/create', name: 'custom_field_create', methods: ['POST'])]
     public function create(
         Inventory $inventory,
@@ -46,6 +55,9 @@ final class CustomFieldController extends AbstractController
         return $this->redirectToRoute('custom_field_index', ['id' => $inventory->getId()]);
     }
 
+    /**
+     * Массовые действия над кастомными полями (удаление, видимость).
+     */
     #[Route('/bulk', name: 'custom_field_bulk', methods: ['POST'])]
     public function bulk(
         Inventory $inventory,
@@ -67,6 +79,9 @@ final class CustomFieldController extends AbstractController
         return $this->redirectToRoute('custom_field_index', ['id' => $inventory->getId()]);
     }
 
+    /**
+     * Перемещает кастомное поле вверх или вниз.
+     */
     #[Route('/move', name: 'custom_field_move', methods: ['POST'])]
     public function move(
         Inventory $inventory,

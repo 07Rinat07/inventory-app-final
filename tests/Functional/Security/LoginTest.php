@@ -6,10 +6,14 @@ namespace App\Tests\Functional\Security;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
+/**
+ * Тестируем форму входа и редиректы.
+ * Базовая проверка безопасности приложения.
+ */
 final class LoginTest extends WebTestCase
 {
     /**
-     * Проверяем, что страница логина доступна гостю
+     * Гость должен видеть страницу входа с нужными инпутами.
      */
     public function testLoginPageIsAccessible(): void
     {
@@ -23,7 +27,7 @@ final class LoginTest extends WebTestCase
     }
 
     /**
-     * Проверяем, что гость не может зайти в защищённый маршрут
+     * Если не залогинился — в личный кабинет не пустят.
      */
     public function testGuestIsRedirectedToLogin(): void
     {
@@ -34,8 +38,7 @@ final class LoginTest extends WebTestCase
     }
 
     /**
-     * Проверяем успешный логин обычного пользователя
-     * (использует данные из AppFixtures)
+     * Проверяем, что реальный пользователь может зайти (данные из фикстур).
      */
     public function testUserCanLogin(): void
     {
@@ -43,6 +46,7 @@ final class LoginTest extends WebTestCase
 
         $crawler = $client->request('GET', '/login');
 
+        // Ищем кнопку и заполняем форму
         $form = $crawler->selectButton('Login')->form([
             '_username' => 'user@test.com',
             '_password' => 'user12345',
@@ -50,6 +54,7 @@ final class LoginTest extends WebTestCase
 
         $client->submit($form);
 
+        // После входа — сразу в список инвентарей
         $this->assertResponseRedirects('/inventories');
         $client->followRedirect();
 
@@ -57,7 +62,7 @@ final class LoginTest extends WebTestCase
     }
 
     /**
-     * Проверяем, что админ тоже логинится
+     * Админ тоже должен уметь входить без проблем.
      */
     public function testAdminCanLogin(): void
     {

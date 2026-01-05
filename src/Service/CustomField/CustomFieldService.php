@@ -11,6 +11,9 @@ use App\Repository\CustomFieldRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Webmozart\Assert\Assert;
 
+/**
+ * Сервис для управления доп. полями (custom fields).
+ */
 final class CustomFieldService
 {
     public function __construct(
@@ -19,7 +22,10 @@ final class CustomFieldService
     ) {}
 
     /**
-     * Создаёт поле, соблюдая правило: максимум 3 каждого типа на Inventory.
+     * Создаём новое кастомное поле.
+     * Есть правило: максимум 3 поля каждого типа на один инвентарь.
+     *
+     * @throws \InvalidArgumentException Если данные кривые или превышен лимит.
      */
     public function create(Inventory $inventory, string $label, string $type): CustomField
     {
@@ -27,16 +33,12 @@ final class CustomFieldService
         Assert::maxLength($label, 100, 'Label is too long');
         Assert::oneOf($type, CustomFieldType::values(), 'Invalid field type');
 
-        // лимит "≤ 3 каждого типа"
-        $count = $this->repository->countByInventoryAndType($inventory, $type);
-        Assert::lessThanEq($count, 2, 'Limit exceeded: max 3 fields per type'); // если уже 3, то count=3 => нельзя
+        // Лимит: не больше 3-х штук каждого типа
+        $count = $this->repository->countByInventoryAndType($inventory, CustomFieldType::from($type));
+        Assert::lessThanEq($count, 2, 'Лимит превышен: максимум 3 поля одного типа.');
 
-        $field = new CustomField();
-        $field->setInventory($inventory);
-        $field->setLabel($label);
-        $field->setType($type);
-        $field->setPosition($this->repository->getNextPosition($inventory));
-        $field->setIsVisible(true);
+        $field = new CustomField($inventory, CustomFieldType::from($type), $this->repository->getNextPosition($inventory));
+        $field->setIsRequired(false);
 
         $this->em->persist($field);
         $this->em->flush();
@@ -45,9 +47,7 @@ final class CustomFieldService
     }
 
     /**
-     * Bulk: show/hide выбранных.
-     *
-     * @param int[] $ids
+     * Массово меняем видимость полей.
      */
     public function setVisibilityBulk(Inventory $inventory, array $ids, bool $visible): void
     {
@@ -61,7 +61,9 @@ final class CustomFieldService
             $fields = $this->repository->findBy(['inventory' => $inventory, 'id' => $ids]);
 
             foreach ($fields as $f) {
-                $f->setIsVisible($visible);
+                if (method_exists($f, 'setIsVisible')) {
+                    $f->setIsVisible($visible);
+                }
             }
 
             $this->em->flush();
@@ -69,9 +71,7 @@ final class CustomFieldService
     }
 
     /**
-     * Bulk delete.
-     *
-     * @param int[] $ids
+     * Удаляем сразу несколько полей.
      */
     public function deleteBulk(Inventory $inventory, array $ids): int
     {
@@ -83,7 +83,8 @@ final class CustomFieldService
     }
 
     /**
-     * Reorder: "move up/down" для выбранного ID (toolbar action).
+     * Двигаем поле вверх или вниз по списку.
+     * $direction: -1 (вверх) или 1 (вниз).
      */
     public function move(Inventory $inventory, int $fieldId, int $direction): void
     {
@@ -92,7 +93,7 @@ final class CustomFieldService
         $this->em->wrapInTransaction(function () use ($inventory, $fieldId, $direction) {
             $fields = $this->repository->findByInventoryOrdered($inventory);
 
-            // индекс текущего
+            // Ищем, на какой позиции сейчас наше поле
             $index = null;
             foreach ($fields as $i => $f) {
                 if ($f->getId() === $fieldId) {
@@ -104,12 +105,13 @@ final class CustomFieldService
                 return;
             }
 
+            // Вычисляем соседа, с которым надо поменяться
             $swapWith = $index + $direction;
             if ($swapWith < 0 || $swapWith >= count($fields)) {
                 return;
             }
 
-            // меняем position местами
+            // Меняем position местами
             $a = $fields[$index];
             $b = $fields[$swapWith];
 

@@ -12,8 +12,16 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 
+/**
+ * Контроллер для изменения порядка кастомных полей.
+ */
 final class CustomFieldReorderController extends AbstractController
 {
+    /**
+     * Обрабатывает POST-запрос на изменение порядка полей.
+     *
+     * Ожидает JSON с ключом 'order', содержащим массив ID полей в нужном порядке.
+     */
     #[Route(
         '/inventories/{id}/custom-fields/reorder',
         name: 'inventory_custom_fields_reorder',

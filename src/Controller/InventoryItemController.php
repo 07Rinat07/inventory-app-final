@@ -14,8 +14,14 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
+/**
+ * Контроллер для управления элементами инвентаря.
+ */
 final class InventoryItemController extends AbstractController
 {
+    /**
+     * Редактирует элемент инвентаря.
+     */
     #[Route(
         '/inventory/{id}/items/{item}/edit',
         name: 'inventory_item_edit',

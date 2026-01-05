@@ -9,8 +9,14 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
+/**
+ * Контроллер для аутентификации пользователей.
+ */
 final class SecurityController extends AbstractController
 {
+    /**
+     * Отображает форму входа и обрабатывает ошибки входа.
+     */
     #[Route('/login', name: 'app_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
@@ -20,6 +26,11 @@ final class SecurityController extends AbstractController
         ]);
     }
 
+    /**
+     * Выход из системы.
+     *
+     * Метод перехватывается фаерволом Symfony, поэтому тело метода никогда не выполняется.
+     */
     #[Route('/logout', name: 'app_logout')]
     public function logout(): void
     {

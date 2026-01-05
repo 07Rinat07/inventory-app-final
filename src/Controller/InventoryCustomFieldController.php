@@ -13,6 +13,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
+/**
+ * Контроллер для управления кастомными полями инвентаря.
+ */
 #[Route('/inventories/{id<\d+>}/fields', name: 'inventory_custom_fields_')]
 final class InventoryCustomFieldController extends AbstractController
 {
@@ -22,6 +25,9 @@ final class InventoryCustomFieldController extends AbstractController
      */
     private const LIMIT_PER_TYPE = 3;
 
+    /**
+     * Отображает список кастомных полей инвентаря.
+     */
     #[Route('', name: 'index', methods: ['GET'])]
     public function index(Inventory $inventory, CustomFieldRepository $repository): Response
     {
@@ -35,6 +41,9 @@ final class InventoryCustomFieldController extends AbstractController
         ]);
     }
 
+    /**
+     * Создает новое кастомное поле.
+     */
     #[Route('/new', name: 'new', methods: ['GET', 'POST'])]
     public function new(Inventory $inventory, Request $request, CustomFieldRepository $repository): Response
     {
@@ -103,6 +112,9 @@ final class InventoryCustomFieldController extends AbstractController
         ]);
     }
 
+    /**
+     * Редактирует кастомное поле.
+     */
     #[Route('/{fieldId<\d+>}/edit', name: 'edit', methods: ['GET', 'POST'])]
     public function edit(Inventory $inventory, int $fieldId, Request $request, CustomFieldRepository $repository): Response
     {
@@ -176,6 +188,9 @@ final class InventoryCustomFieldController extends AbstractController
         ]);
     }
 
+    /**
+     * Удаляет кастомное поле.
+     */
     #[Route('/{fieldId<\d+>}/delete', name: 'delete', methods: ['POST'])]
     public function delete(Inventory $inventory, int $fieldId, Request $request, CustomFieldRepository $repository): Response
     {

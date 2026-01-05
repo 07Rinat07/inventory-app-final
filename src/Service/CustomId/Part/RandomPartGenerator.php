@@ -8,13 +8,27 @@ use App\Domain\Policy\InventoryIdPartGeneratorInterface;
 use App\Domain\ValueObject\InventoryIdPartType;
 use App\Entity\InventoryIdFormatPart;
 
+/**
+ * Генератор случайной части идентификатора.
+ */
 final class RandomPartGenerator implements InventoryIdPartGeneratorInterface
 {
+    /**
+     * Проверяет, поддерживает ли данный генератор указанную часть формата.
+     */
     public function supports(InventoryIdFormatPart $part): bool
     {
         return $part->getType() === InventoryIdPartType::RANDOM;
     }
 
+    /**
+     * Генерирует случайную строку заданной длины из указанного алфавита.
+     *
+     * @param InventoryIdFormatPart $part Часть формата.
+     * @param int|null $sequenceValue Значение последовательности (не используется).
+     * @return string Сгенерированная случайная строка.
+     * @throws \LogicException Если параметры генерации некорректны.
+     */
     public function generate(InventoryIdFormatPart $part, ?int $sequenceValue): string
     {
         // param1 — длина
@@ -30,6 +44,9 @@ final class RandomPartGenerator implements InventoryIdPartGeneratorInterface
         return $this->randomFromAlphabet($alphabet, $length);
     }
 
+    /**
+     * Вспомогательный метод для выбора случайных символов из алфавита.
+     */
     private function randomFromAlphabet(string $alphabet, int $length): string
     {
         $alphabet = array_values(array_unique(mb_str_split($alphabet)));

@@ -8,13 +8,27 @@ use App\Domain\Policy\InventoryIdPartGeneratorInterface;
 use App\Domain\ValueObject\InventoryIdPartType;
 use App\Entity\InventoryIdFormatPart;
 
+/**
+ * Генератор инкрементальной части (последовательности) идентификатора.
+ */
 final class SeqPartGenerator implements InventoryIdPartGeneratorInterface
 {
+    /**
+     * Проверяет, поддерживает ли данный генератор указанную часть формата.
+     */
     public function supports(InventoryIdFormatPart $part): bool
     {
         return $part->getType() === InventoryIdPartType::SEQ;
     }
 
+    /**
+     * Форматирует числовое значение последовательности с учетом заданного паддинга.
+     *
+     * @param InventoryIdFormatPart $part Часть формата.
+     * @param int|null $sequenceValue Текущее значение последовательности.
+     * @return string Отформатированное значение последовательности.
+     * @throws \LogicException Если значение последовательности не передано.
+     */
     public function generate(InventoryIdFormatPart $part, ?int $sequenceValue): string
     {
         if ($sequenceValue === null) {

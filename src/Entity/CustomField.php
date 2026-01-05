@@ -8,6 +8,9 @@ use App\Domain\CustomField\CustomFieldType;
 use App\Repository\CustomFieldRepository;
 use Doctrine\ORM\Mapping as ORM;
 
+/**
+ * Представляет кастомное поле инвентаря.
+ */
 #[ORM\Entity(repositoryClass: CustomFieldRepository::class)]
 #[ORM\Table(name: 'custom_fields')]
 #[ORM\UniqueConstraint(name: 'uniq_custom_fields_position', columns: ['inventory_id', 'position'])]
@@ -20,6 +23,7 @@ class CustomField
     private ?int $id = null;
 
     /**
+     * Инвентарь, которому принадлежит поле.
      * Owning side.
      * nullable=false + onDelete=CASCADE => поле удаляется вместе с инвентарём.
      */
@@ -28,18 +32,26 @@ class CustomField
     private Inventory $inventory;
 
     /**
+     * Тип поля (текст, число и т.д.).
      * Храним строку в БД, наружу отдаём enum.
      */
     #[ORM\Column(type: 'string', length: 20)]
     private string $type;
 
+    /**
+     * Позиция поля при отображении.
+     */
     #[ORM\Column(type: 'integer')]
     private int $position;
 
+    /**
+     * Является ли поле обязательным для заполнения.
+     */
     #[ORM\Column(name: 'is_required', type: 'boolean', options: ['default' => false])]
     private bool $isRequired = false;
 
     /**
+     * Создает новое кастомное поле.
      * Обязательные поля задаём через constructor,
      * чтобы сущность не могла существовать в “полусобранном” состоянии.
      */
@@ -52,38 +64,50 @@ class CustomField
 
     // ---------------- getters / setters ----------------
 
+    /**
+     * Идентификатор поля.
+     */
     public function getId(): ?int
     {
         return $this->id;
     }
 
+    /**
+     * Возвращает инвентарь.
+     */
     public function getInventory(): Inventory
     {
         return $this->inventory;
     }
 
     /**
-     * Если нужно менять inventory у поля (обычно не нужно),
-     * то можно добавить setInventory(). Сейчас оставляю без него намеренно
-     * (меньше риска “перетаскивать” поля между inventory).
+     * Возвращает тип поля.
      */
-
     public function getType(): CustomFieldType
     {
         return CustomFieldType::from($this->type);
     }
 
+    /**
+     * Устанавливает тип поля.
+     */
     public function setType(CustomFieldType $type): self
     {
         $this->type = $type->value;
         return $this;
     }
 
+    /**
+     * Возвращает позицию поля.
+     */
     public function getPosition(): int
     {
         return $this->position;
     }
 
+    /**
+     * Устанавливает позицию поля.
+     */
     public function setPosition(int $position): self
     {
         $this->position = $position;
@@ -91,6 +115,7 @@ class CustomField
     }
 
     /**
+     * Проверяет, является ли поле обязательным.
      * Twig:
      * - f.isRequired  -> вызовет isRequired()
      * - f.required    -> вызовет isRequired() (из-за правила get/is/has)
@@ -100,6 +125,9 @@ class CustomField
         return $this->isRequired;
     }
 
+    /**
+     * Устанавливает обязательность поля.
+     */
     public function setIsRequired(bool $required): self
     {
         $this->isRequired = $required;

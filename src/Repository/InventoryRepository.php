@@ -10,32 +10,27 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
+ * Репозиторий для управления сущностями инвентаря.
+ *
  * @extends ServiceEntityRepository<Inventory>
  */
 final class InventoryRepository extends ServiceEntityRepository
 {
+    /**
+     * Создает новый экземпляр репозитория.
+     */
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Inventory::class);
     }
 
     /**
-     * Возвращает инвентари, доступные пользователю.
-     *
-     * Логика:
-     * - ROLE_ADMIN:
-     *     • видит ВСЕ инвентари (public + private, любые владельцы)
-     * - ROLE_USER:
-     *     • свои инвентари (public + private)
-     *     • чужие ТОЛЬКО public
-     *
-     * Чужие private для ROLE_USER не возвращаются вообще.
-     *
-     * @return Inventory[]
+     * Показываем инвентари, которые доступны юзеру.
+     * Админ видит вообще всё, обычный юзер — своё + то, что помечено как public.
      */
     public function findAvailableForUser(User $user): array
     {
-        // Администратор видит всё
+        // Админам можно всё
         if (\in_array('ROLE_ADMIN', $user->getRoles(), true)) {
             return $this->createQueryBuilder('i')
                 ->orderBy('i.id', 'DESC')
@@ -43,7 +38,7 @@ final class InventoryRepository extends ServiceEntityRepository
                 ->getResult();
         }
 
-        // Обычный пользователь: свои + public
+        // Остальным — только их личное или публичное
         return $this->createQueryBuilder('i')
             ->andWhere('i.owner = :user OR i.isPublic = true')
             ->setParameter('user', $user)
@@ -53,7 +48,7 @@ final class InventoryRepository extends ServiceEntityRepository
     }
 
     /**
-     * Сохранение инвентаря
+     * Сохраняем (persist) инвентарь. Если flush = true, то сразу пишем в базу.
      */
     public function save(Inventory $inventory, bool $flush = false): void
     {
@@ -65,7 +60,7 @@ final class InventoryRepository extends ServiceEntityRepository
     }
 
     /**
-     * Удаление инвентаря
+     * Удаляем инвентарь.
      */
     public function remove(Inventory $inventory, bool $flush = false): void
     {

@@ -78,6 +78,9 @@ class Inventory
     /** @var Collection<int, CustomField> */
     private Collection $customFields;
 
+    /**
+     * Создает новый объект инвентаря.
+     */
     public function __construct()
     {
         $this->idFormatParts = new ArrayCollection();
@@ -86,44 +89,68 @@ class Inventory
 
     // ---------------- base getters / setters ----------------
 
+    /**
+     * Идентификатор инвентаря.
+     */
     public function getId(): ?int
     {
         return $this->id;
     }
 
+    /**
+     * Возвращает владельца инвентаря.
+     */
     public function getOwner(): User
     {
         return $this->owner;
     }
 
+    /**
+     * Ставим владельца инвентаря.
+     */
     public function setOwner(User $owner): self
     {
         $this->owner = $owner;
         return $this;
     }
 
+    /**
+     * Название инвентаря.
+     */
     public function getName(): string
     {
         return $this->name;
     }
 
+    /**
+     * Меняем название, убирая лишние пробелы.
+     */
     public function setName(string $name): self
     {
         $this->name = trim($name);
         return $this;
     }
 
+    /**
+     * Открытый (публичный) инвентарь или нет.
+     */
     public function isPublic(): bool
     {
         return $this->isPublic;
     }
 
+    /**
+     * Меняем статус публичности.
+     */
     public function setIsPublic(bool $isPublic): self
     {
         $this->isPublic = $isPublic;
         return $this;
     }
 
+    /**
+     * Возвращает версию записи.
+     */
     public function getVersion(): int
     {
         return $this->version;
@@ -132,6 +159,7 @@ class Inventory
     // ---------------- ID format parts ----------------
 
     /**
+     * Возвращает коллекцию частей формата идентификатора.
      * @return Collection<int, InventoryIdFormatPart>
      */
     public function getIdFormatParts(): Collection
@@ -139,6 +167,12 @@ class Inventory
         return $this->idFormatParts;
     }
 
+    /**
+     * Добавляет часть формата идентификатора.
+     *
+     * @param InventoryIdFormatPart $part Часть формата.
+     * @return $this
+     */
     public function addIdFormatPart(InventoryIdFormatPart $part): self
     {
         if (!$this->idFormatParts->contains($part)) {
@@ -150,6 +184,12 @@ class Inventory
         return $this;
     }
 
+    /**
+     * Удаляет часть формата идентификатора.
+     *
+     * @param InventoryIdFormatPart $part Часть формата.
+     * @return $this
+     */
     public function removeIdFormatPart(InventoryIdFormatPart $part): self
     {
         // НЕ делаем $part->setInventory(null) — joinColumn nullable=false.
@@ -162,6 +202,7 @@ class Inventory
     // ---------------- Custom fields ----------------
 
     /**
+     * Возвращает коллекцию кастомных полей.
      * @return Collection<int, CustomField>
      */
     public function getCustomFields(): Collection
@@ -169,21 +210,26 @@ class Inventory
         return $this->customFields;
     }
 
+    /**
+     * Добавляем кастомное поле к инвентарю.
+     * Не забываем про owning-side в CustomField.
+     */
     public function addCustomField(CustomField $customField): self
     {
         if (!$this->customFields->contains($customField)) {
             $this->customFields->add($customField);
-            // owning-side (в CustomField) должен ссылаться на Inventory
             $customField->setInventory($this);
         }
 
         return $this;
     }
 
+    /**
+     * Удаляем кастомное поле.
+     * Саму строку в БД удалит Doctrine через orphanRemoval.
+     */
     public function removeCustomField(CustomField $customField): self
     {
-        // НЕ делаем $customField->setInventory(null) — joinColumn nullable=false.
-        // orphanRemoval=true удалит строку из БД при flush.
         $this->customFields->removeElement($customField);
 
         return $this;

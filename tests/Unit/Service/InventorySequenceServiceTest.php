@@ -9,8 +9,15 @@ use App\Service\InventorySequenceService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Мок-тест для сервиса последовательностей.
+ * Проверяем логику инкремента без реального обращения к базе данных.
+ */
 final class InventorySequenceServiceTest extends TestCase
 {
+    /**
+     * Проверяем, что при вызове nextValue значение счетчика действительно растет.
+     */
     public function testNextSequenceIncrements(): void
     {
         $em = $this->createMock(EntityManagerInterface::class);
@@ -21,6 +28,7 @@ final class InventorySequenceServiceTest extends TestCase
 
         $repo->method('findForUpdate')->willReturn($sequence);
 
+        // Имитируем выполнение транзакции
         $em->method('wrapInTransaction')->willReturnCallback(function ($callback) {
             return $callback($this->createMock(EntityManagerInterface::class));
         });
@@ -31,5 +39,3 @@ final class InventorySequenceServiceTest extends TestCase
         $this->assertSame(2, $service->nextValue($inventory));
     }
 }
-
-// Бизнес-логика вынесена в сервис, тестируется без БД.

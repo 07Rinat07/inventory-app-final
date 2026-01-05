@@ -12,12 +12,19 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
+/**
+ * Форма для настройки кастомного поля.
+ */
 final class CustomFieldType extends AbstractType
 {
+    /**
+     * Рисуем поля формы.
+     */
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
             ->add('type', ChoiceType::class, [
+                'label' => 'Тип поля',
                 'choices' => array_combine(
                     array_map(fn($e) => $e->label(), FieldTypeEnum::cases()),
                     FieldTypeEnum::cases()
@@ -26,6 +33,7 @@ final class CustomFieldType extends AbstractType
                 'choice_label' => fn(FieldTypeEnum $e) => $e->label(),
             ])
             ->add('isRequired', CheckboxType::class, [
+                'label' => 'Обязательное для заполнения',
                 'required' => false,
             ]);
     }

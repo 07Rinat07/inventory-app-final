@@ -70,6 +70,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'owner', targetEntity: Inventory::class)]
     private Collection $inventories;
 
+    /**
+     * Создает новый экземпляр пользователя.
+     */
     public function __construct()
     {
         // Инициализация коллекций — обязательна, иначе будут null/ошибки при add/remove
@@ -80,16 +83,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     // Identifiers
     // -------------------------
 
+    /**
+     * Идентификатор пользователя.
+     */
     public function getId(): ?int
     {
         return $this->id;
     }
 
+    /**
+     * Возвращает email пользователя.
+     */
     public function getEmail(): string
     {
         return $this->email;
     }
 
+    /**
+     * Устанавливает email пользователя.
+     */
     public function setEmail(string $email): self
     {
         $this->email = $email;
@@ -108,6 +120,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     // Roles
     // -------------------------
 
+    /**
+     * Возвращает роли пользователя.
+     * @return list<string>
+     */
     public function getRoles(): array
     {
         $roles = $this->roles;
@@ -119,6 +135,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
+     * Устанавливает роли пользователя.
      * @param list<string> $roles
      */
     public function setRoles(array $roles): self
@@ -131,11 +148,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     // Password
     // -------------------------
 
+    /**
+     * Возвращает хешированный пароль.
+     */
     public function getPassword(): string
     {
         return $this->password;
     }
 
+    /**
+     * Ставим хешированный пароль.
+     */
     public function setPassword(string $password): self
     {
         $this->password = $password;
@@ -143,14 +166,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     // -------------------------
-    // Preferences
+    // Настройки интерфейса
     // -------------------------
 
+    /**
+     * Какая тема сейчас выбрана.
+     */
     public function getTheme(): string
     {
         return $this->theme;
     }
 
+    /**
+     * Меняем тему (пока только light или dark).
+     */
     public function setTheme(string $theme): self
     {
         $this->theme = \in_array($theme, ['light', 'dark'], true)
@@ -160,11 +189,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    /**
+     * Язык пользователя.
+     */
     public function getLocale(): string
     {
         return $this->locale;
     }
 
+    /**
+     * Меняем язык (ru или en).
+     */
     public function setLocale(string $locale): self
     {
         $this->locale = \in_array($locale, ['en', 'ru'], true)
@@ -175,10 +210,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     // -------------------------
-    // Inventories (inverse side)
+    // Инвентари (обратная сторона)
     // -------------------------
 
     /**
+     * Список инвентарей, которыми владеет юзер.
      * @return Collection<int, Inventory>
      */
     public function getInventories(): Collection
@@ -186,24 +222,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->inventories;
     }
 
+    /**
+     * Добавляем новый инвентарь юзеру.
+     * Не забываем про двустороннюю связь для Doctrine.
+     */
     public function addInventory(Inventory $inventory): self
     {
         if (!$this->inventories->contains($inventory)) {
             $this->inventories->add($inventory);
-
-            // owning-side: Inventory::$owner
-            // важно держать обе стороны синхронно (канонично для Doctrine)
             $inventory->setOwner($this);
         }
 
         return $this;
     }
 
+    /**
+     * Убираем инвентарь из списка.
+     */
     public function removeInventory(Inventory $inventory): self
     {
-        // Важно: Inventory::$owner = NOT NULL, поэтому setOwner(null) делать нельзя.
-        // Если нужно “убрать” инвентарь у пользователя — это операция уровня сервиса:
-        // либо delete inventory, либо assign другого owner.
+        // В БД owner не может быть NULL, так что просто убрать из коллекции мало,
+        // нужно либо удалить сам инвентарь, либо сменить владельца в сервисе.
         $this->inventories->removeElement($inventory);
 
         return $this;
@@ -213,6 +252,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     // Security cleanup
     // -------------------------
 
+    /**
+     * Очистка временных чувствительных данных.
+     */
     public function eraseCredentials(): void
     {
         // Здесь можно очищать временные чувствительные данные,

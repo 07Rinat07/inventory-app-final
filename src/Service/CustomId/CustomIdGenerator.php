@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\CustomId;
 
+use App\Domain\ValueObject\InventoryIdPartType;
 use App\Entity\Inventory;
 use App\Entity\InventoryIdFormatPart;
 use App\Entity\InventorySequence;
@@ -11,14 +12,27 @@ use App\Repository\InventoryIdFormatPartRepository;
 use App\Repository\InventorySequenceRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
+/**
+ * Генератор кастомных идентификаторов для предметов инвентаря на основе настроенного формата.
+ */
 final class CustomIdGenerator
 {
+    /**
+     * Создает новый экземпляр генератора.
+     */
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly InventoryIdFormatPartRepository $formatPartRepository,
         private readonly InventorySequenceRepository $sequenceRepository,
     ) {}
 
+    /**
+     * Генерирует уникальную строку идентификатора для указанного инвентаря.
+     *
+     * @param Inventory $inventory Инвентарь, для которого генерируется ID.
+     * @return string Сгенерированный идентификатор.
+     * @throws \LogicException Если формат идентификатора не настроен.
+     */
     public function generate(Inventory $inventory): string
     {
         return $this->em->transactional(function () use ($inventory): string {
@@ -42,35 +56,40 @@ final class CustomIdGenerator
         });
     }
 
+    /**
+     * Разрешает значение конкретной части формата.
+     */
     private function resolvePart(
         Inventory $inventory,
         InventoryIdFormatPart $part
     ): string {
         return match ($part->getType()) {
-            InventoryIdFormatPart::TYPE_FIXED =>
+            InventoryIdPartType::FIXED =>
             (string) $part->getParam1(),
 
-            InventoryIdFormatPart::TYPE_DATETIME =>
+            InventoryIdPartType::DATETIME =>
             (new \DateTimeImmutable())->format($part->getParam1() ?? 'Y'),
 
-            InventoryIdFormatPart::TYPE_RANDOM =>
+            InventoryIdPartType::RANDOM =>
             $this->random((int) ($part->getParam1() ?? 6)),
 
-            InventoryIdFormatPart::TYPE_SEQ =>
+            InventoryIdPartType::SEQ =>
             $this->nextSequence($inventory, (int) ($part->getParam1() ?? 6)),
-
-            InventoryIdFormatPart::TYPE_GUID =>
-            substr(bin2hex(random_bytes(16)), 0, 12),
 
             default =>
             throw new \LogicException('Unsupported ID format part type.'),
         };
     }
 
+    /**
+     * Получает следующее значение последовательности для инвентаря.
+     */
     private function nextSequence(Inventory $inventory, int $length): string
     {
+        // В Repository метод называется findForUpdate, а здесь вызывался findOneByInventoryForUpdate.
+        // Нужно проверить соответствие имен. Ранее в InventorySequenceRepository я видел findForUpdate.
         $sequence = $this->sequenceRepository
-            ->findOneByInventoryForUpdate($inventory);
+            ->findForUpdate($inventory);
 
         if ($sequence === null) {
             $sequence = new InventorySequence();
@@ -78,11 +97,15 @@ final class CustomIdGenerator
             $this->em->persist($sequence);
         }
 
-        $value = $sequence->next();
+        $value = $sequence->getNextValue();
+        $sequence->increment();
 
         return str_pad((string) $value, $length, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * Генерирует случайную шестнадцатеричную строку заданной длины.
+     */
     private function random(int $length): string
     {
         return substr(bin2hex(random_bytes($length)), 0, $length);

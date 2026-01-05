@@ -9,15 +9,9 @@ use App\Entity\InventoryIdFormatPart;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * Генератор custom_id для InventoryItem.
+ * Генератор кастомных ID для элементов инвентаря.
  *
- * Почему так:
- * - InventoryItemController ожидает сервис InventoryItemIdGenerator::generate($inventory)
- * - Формат хранится в inventory_id_format_part и доступен через $inventory->getIdFormatParts()
- *
- * Алгоритм:
- * - если формат пустой -> fallback "INV{inventoryId}-{seq}"
- * - если формат задан -> собираем строку по частям
+ * Собирает строку ID на основе настроенного формата (InventoryIdFormatPart).
  */
 final class InventoryItemIdGenerator
 {
@@ -25,6 +19,11 @@ final class InventoryItemIdGenerator
         private readonly EntityManagerInterface $em,
     ) {}
 
+    /**
+     * Генерирует custom_id для элемента инвентаря.
+     *
+     * Если формат не задан, используется fallback-вариант: INV{id}-{seq}.
+     */
     public function generate(Inventory $inventory): string
     {
         /** @var InventoryIdFormatPart[] $parts */

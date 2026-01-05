@@ -8,10 +8,17 @@ use App\Domain\ValueObject\InventoryIdPartType;
 use App\Entity\Inventory;
 use App\Entity\InventoryIdFormatPart;
 
+/**
+ * Валидатор формата кастомного идентификатора инвентаря.
+ * Проверяет бизнес-правила формирования ID.
+ */
 final class InventoryIdFormatValidator
 {
     /**
-     * @throws \DomainException
+     * Валидирует формат идентификатора для инвентаря.
+     *
+     * @param Inventory $inventory Инвентарь.
+     * @throws \DomainException Если формат некорректен.
      */
     public function validate(Inventory $inventory): void
     {

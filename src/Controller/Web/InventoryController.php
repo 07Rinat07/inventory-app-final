@@ -13,10 +13,19 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+/**
+ * Основной контроллер для управления инвентарями через веб-интерфейс.
+ */
 #[Route('/inventories')]
-#[IsGranted('ROLE_USER')] // доступ только аутентифицированным
+#[IsGranted('ROLE_USER')] // Доступ только аутентифицированным пользователям
 final class InventoryController extends AbstractController
 {
+    /**
+     * Отображает список инвентарей, доступных текущему пользователю.
+     *
+     * @param InventoryService $service Сервис для работы с инвентарями.
+     * @return Response Ответ с отрендеренным списком инвентарей.
+     */
     #[Route('', name: 'inventory_index', methods: ['GET'])]
     public function index(InventoryService $service): Response
     {
@@ -30,6 +39,13 @@ final class InventoryController extends AbstractController
         ]);
     }
 
+    /**
+     * Обрабатывает создание нового инвентаря (отображение формы и сохранение).
+     *
+     * @param Request $request Объект запроса.
+     * @param InventoryService $service Сервис для работы с инвентарями.
+     * @return Response Ответ с формой или редирект при успехе.
+     */
     #[Route('/create', name: 'inventory_create', methods: ['GET', 'POST'])]
     public function create(Request $request, InventoryService $service): Response
     {
@@ -68,7 +84,12 @@ final class InventoryController extends AbstractController
     }
 
     /**
-     * requirements ограничивает id цифрами, чтобы /create не матчился как {id}.
+     * Отображает детали конкретного инвентаря.
+     *
+     * Requirements ограничивает id цифрами, чтобы маршрут /create не конфликтовал с /{id}.
+     *
+     * @param Inventory $inventory Объект инвентаря (автоматическое преобразование id).
+     * @return Response Ответ с деталями инвентаря.
      */
     #[Route('/{id}', name: 'inventory_show', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function show(Inventory $inventory): Response
@@ -80,6 +101,14 @@ final class InventoryController extends AbstractController
         ]);
     }
 
+    /**
+     * Обрабатывает редактирование основных данных инвентаря.
+     *
+     * @param Request $request Объект запроса.
+     * @param Inventory $inventory Объект инвентаря.
+     * @param InventoryService $service Сервис для работы с инвентарями.
+     * @return Response Ответ с формой или редирект при успехе.
+     */
     #[Route('/{id}/edit', name: 'inventory_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
     public function edit(Request $request, Inventory $inventory, InventoryService $service): Response
     {
@@ -115,15 +144,23 @@ final class InventoryController extends AbstractController
         ]);
     }
 
+    /**
+     * Обрабатывает удаление инвентаря.
+     * Требует валидный CSRF-токен.
+     *
+     * @param Request $request Объект запроса.
+     * @param Inventory $inventory Объект инвентаря.
+     * @param InventoryService $service Сервис для работы с инвентарями.
+     * @return Response Редирект на список инвентарей.
+     */
     #[Route('/{id}/delete', name: 'inventory_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(Request $request, Inventory $inventory, InventoryService $service): Response
     {
         $this->denyAccessUnlessGranted('INVENTORY_DELETE', $inventory);
 
         /**
-         * CSRF:
+         * CSRF защита:
          * - в шаблоне: <input type="hidden" name="_token" value="{{ csrf_token('inventory_delete_' ~ inventory.id) }}">
-         * - здесь: tokenId = inventory_delete_{id}
          */
         $token = $request->request->getString('_token', '');
         if (!$this->isCsrfTokenValid('inventory_delete_' . $inventory->getId(), $token)) {

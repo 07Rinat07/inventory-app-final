@@ -10,8 +10,17 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
+/**
+ * Тест на безопасность удаления инвентаря.
+ * Проверяем сложный кейс: можно ли удалить чужой инвентарь, если он публичный?
+ * Спойлер: нет, удалять может только владелец.
+ */
 final class InventoryDeleteSecurityTest extends WebTestCase
 {
+    /**
+     * Обычный пользователь не должен иметь возможности удалить чужой инвентарь,
+     * даже если тот открыт для просмотра всем (isPublic = true).
+     */
     public function testUserCannotDeleteForeignPublicInventory(): void
     {
         $client = static::createClient();
@@ -20,7 +29,7 @@ final class InventoryDeleteSecurityTest extends WebTestCase
         /** @var EntityManagerInterface $em */
         $em = $container->get(EntityManagerInterface::class);
 
-        // ---------- arrange ----------
+        // ---------- Готовим данные ----------
 
         $admin = new User();
         $admin->setEmail('admin_' . uniqid('', true) . '@example.com');
@@ -42,32 +51,35 @@ final class InventoryDeleteSecurityTest extends WebTestCase
         $em->persist($inventory);
         $em->flush();
 
-        // ---------- act ----------
+        // ---------- Действие ----------
 
-        // логинимся под обычным пользователем
+        // Логинимся под обычным пользователем (не владельцем)
         $client->loginUser($user);
 
-        // Инициализируем сессию и пушим запрос в стек, чтобы CsrfTokenManager её увидел
+        // Инициализируем сессию, чтобы Symfony могла работать с CSRF
         $client->request('GET', '/inventories');
         $container->get('request_stack')->push($client->getRequest());
 
-        // CSRF-токен
+        // Генерируем правильный CSRF-токен, чтобы тест упал именно на проверке прав (Voter),
+        // а не на проверке токена.
         $csrfTokenManager = $container->get('security.csrf.token_manager');
         $csrfToken = $csrfTokenManager
             ->getToken('inventory_delete_' . $inventory->getId())
             ->getValue();
 
-        // попытка удалить чужой public inventory
+        // Пытаемся удалить чужой инвентарь
         $client->request(
             'POST',
             '/inventories/' . $inventory->getId() . '/delete',
             ['_token' => $csrfToken]
         );
 
-        // ---------- assert ----------
+        // ---------- Проверка ----------
 
+        // Ожидаем "403 Forbidden"
         $this->assertResponseStatusCodeSame(403);
 
+        // Проверяем в БД, что инвентарь никуда не делся
         $stillExists = $em->getRepository(Inventory::class)
             ->find($inventory->getId());
 

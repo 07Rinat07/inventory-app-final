@@ -8,7 +8,8 @@ services:
       - "8080:80"
     volumes:
       - .:/var/www/html
-      - ./var:/var/www/html/var
+      - /var/www/html/vendor
+      - /var/www/html/var
     environment:
       APP_ENV: dev
       APP_DEBUG: 1

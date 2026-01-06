@@ -39,15 +39,15 @@ WORKDIR /var/www/html
 COPY . .
 
 # Установка зависимостей (без скриптов, так как БД может быть еще не готова)
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
 
 # Права доступа
-RUN mkdir -p var && chown -R www-data:www-data /var/www/html/var
+RUN mkdir -p var vendor && chown -R www-data:www-data /var/www/html/var /var/www/html/vendor
 
 # Копирование скрипта входа
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 80
 

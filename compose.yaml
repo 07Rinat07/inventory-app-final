@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: inventory_app_app
     ports:
-      - "8080:80"
+      - "8088:80"
     volumes:
       - .:/var/www/html
       - /var/www/html/vendor
